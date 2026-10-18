@@ -42,6 +42,7 @@ export const vi: Resources = {
     friendHasHistory: 'Bạn này đã có lịch sử giao dịch. Hãy lưu trữ thay vì xóa.',
     invalidBackup: 'File không phải bản backup Personal expense note hợp lệ.',
     newerSchema: 'Bản backup từ phiên bản app mới hơn. Hãy cập nhật app.',
+    invalidDebtSelection: 'Khoản đã chọn không còn hợp lệ.',
     splitFriendRequired: 'Chọn bạn cho mọi dòng chia tiền.',
   },
   parse: {

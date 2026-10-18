@@ -26,7 +26,14 @@ export const transactionSchema = z.object({
   rawInput: z.string().optional(),
 })
 export const debtSchema = z.object({ ...syncable, transactionId: z.string(), friendId: z.string(), amount })
-export const settlementSchema = z.object({ ...syncable, friendId: z.string(), amount, date: isoDate, note: z.string() })
+export const settlementSchema = z.object({
+  ...syncable,
+  friendId: z.string(),
+  amount,
+  date: isoDate,
+  note: z.string(),
+  debtIds: z.array(z.string()).optional(),
+})
 
 const uniqueIds = (items: { id: string }[]) => new Set(items.map((i) => i.id)).size === items.length
 

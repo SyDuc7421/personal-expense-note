@@ -37,7 +37,7 @@ export interface LedgerRepository {
   /** Live debts joined with their live transactions. */
   listDebtEntries(friendId?: string): Promise<FriendDebtEntry[]>
   listSettlements(friendId?: string): Promise<Settlement[]>
-  addSettlement(input: { friendId: string; amount: number; date: string; note: string }): Promise<string>
+  addSettlement(input: { friendId: string; amount: number; date: string; note: string; debtIds?: string[] }): Promise<string>
   removeSettlement(id: string): Promise<void>
 }
 

@@ -40,6 +40,7 @@ export const en = {
     friendHasHistory: 'This friend has transaction history. Archive instead of deleting.',
     invalidBackup: 'This file is not a valid Personal expense note backup.',
     newerSchema: 'This backup was made by a newer app version. Please update the app.',
+    invalidDebtSelection: 'The selected items are no longer valid.',
     splitFriendRequired: 'Choose a friend for every split.',
   },
   parse: {

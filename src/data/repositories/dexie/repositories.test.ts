@@ -161,6 +161,34 @@ describe('ledger', () => {
     await repos.ledger.removeSettlement(id)
     expect(await repos.ledger.listSettlements()).toEqual([])
   })
+
+  test('targeted settlement stores debtIds', async () => {
+    const { repos, nam } = await setup()
+    await repos.transactions.create(lau([{ friendId: nam, amount: 150000 }]))
+    const [entry] = await repos.ledger.listDebtEntries(nam)
+    await repos.ledger.addSettlement({ friendId: nam, amount: 150000, date: '2026-10-13', note: '', debtIds: [entry.debtId] })
+    expect((await repos.ledger.listSettlements(nam))[0].debtIds).toEqual([entry.debtId])
+  })
+
+  test('amount-only settlement has no debtIds key', async () => {
+    const { repos, nam } = await setup()
+    await repos.ledger.addSettlement({ friendId: nam, amount: 5000, date: '2026-10-13', note: '' })
+    expect('debtIds' in (await repos.ledger.listSettlements(nam))[0]).toBe(false)
+  })
+
+  test('rejects bad debtIds', async () => {
+    const { repos, nam, huy } = await setup()
+    const txId = await repos.transactions.create(lau([{ friendId: nam, amount: 150000 }, { friendId: huy, amount: 150000 }]))
+    const namDebt = (await repos.ledger.listDebtEntries(nam))[0].debtId
+    const huyDebt = (await repos.ledger.listDebtEntries(huy))[0].debtId
+    const add = (debtIds: string[]) => repos.ledger.addSettlement({ friendId: nam, amount: 1000, date: '2026-10-13', note: '', debtIds })
+    expect(await codeOf(add([]))).toBe('invalidDebtSelection')
+    expect(await codeOf(add([namDebt, namDebt]))).toBe('invalidDebtSelection')
+    expect(await codeOf(add([huyDebt]))).toBe('invalidDebtSelection')
+    await repos.transactions.remove(txId)
+    expect(await codeOf(add([namDebt]))).toBe('invalidDebtSelection')
+    expect(await repos.ledger.listSettlements()).toEqual([])
+  })
 })
 
 test('meta get/set', async () => {
