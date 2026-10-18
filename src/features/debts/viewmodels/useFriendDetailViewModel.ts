@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router'
 import { toast } from 'sonner'
@@ -49,6 +49,7 @@ export interface FriendDetailViewModel {
     /** ids = selected debtIds */
     selection: { active: boolean; ids: string[] }
     canSelect: boolean
+    isMarkingPaid: boolean
   }
   actions: {
     back(): void
@@ -77,6 +78,9 @@ export function useFriendDetailViewModel(friendId: string, opts: { today?: Date 
   const balances = useBalances(friendId)
   const [settle, setSettle] = useState({ open: false, amount: '', error: null as string | null, isSaving: false })
   const [selection, setSelection] = useState({ active: false, ids: [] as string[] })
+  // A ref, not state: a double tap fires twice before React re-renders.
+  const marking = useRef(false)
+  const [isMarkingPaid, setIsMarkingPaid] = useState(false)
 
   const l = balances.byFriend.get(friendId)
   const balance = l?.balance ?? 0
@@ -137,6 +141,7 @@ export function useFriendDetailViewModel(friendId: string, opts: { today?: Date 
       settle,
       selection,
       canSelect: outstanding.length > 0,
+      isMarkingPaid,
     },
     actions: {
       back: () => navigate('/debts'),
@@ -152,7 +157,9 @@ export function useFriendDetailViewModel(friendId: string, opts: { today?: Date 
       remindSelected: () => share(selected.filter((a) => a.remaining > 0)),
       async markSelectedPaid() {
         const debts = selected.filter((a) => a.remaining > 0)
-        if (debts.length === 0) return
+        if (debts.length === 0 || marking.current) return
+        marking.current = true
+        setIsMarkingPaid(true)
         try {
           const id = await ledger.addSettlement({
             friendId, amount: debts.reduce((acc, a) => acc + a.remaining, 0), date: todayISO(opts.today), note: '',
@@ -165,6 +172,9 @@ export function useFriendDetailViewModel(friendId: string, opts: { today?: Date 
           })
         } catch (e) {
           toast.error(t(errorKey(e)))
+        } finally {
+          marking.current = false
+          setIsMarkingPaid(false)
         }
       },
       async confirmSettle() {

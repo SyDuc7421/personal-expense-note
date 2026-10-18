@@ -171,3 +171,14 @@ test('canSelect is false when everything is paid', async () => {
   await repos.ledger.addSettlement({ friendId: nam, amount: 200000, date: '2026-10-16', note: '' })
   await waitFor(() => expect(view.result.current.state.canSelect).toBe(false))
 })
+
+test('double-tapping mark paid records only one settlement', async () => {
+  const { view, repos, nam } = await seed()
+  const vm = () => view.result.current
+  act(() => vm().actions.toggleSelectMode())
+  act(() => vm().actions.toggleSelected(debtRow(vm(), 'grab').id))
+  const { markSelectedPaid } = vm().actions
+  await act(() => Promise.all([markSelectedPaid(), markSelectedPaid()]))
+  expect(await repos.ledger.listSettlements(nam)).toHaveLength(1)
+  await waitFor(() => expect(vm().state.balance).toBe(150000))
+})

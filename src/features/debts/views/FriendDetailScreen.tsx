@@ -107,7 +107,7 @@ function FriendDetail({ friendId }: { friendId: string }) {
               <Button variant="outline" className="flex-1" onClick={() => void actions.remindSelected()} disabled={count === 0}>
                 <Send /> {count ? t('debts.remindCount', { count }) : t('debts.remind')}
               </Button>
-              <Button className="flex-1" onClick={() => void actions.markSelectedPaid()} disabled={count === 0}>
+              <Button className="flex-1" onClick={() => void actions.markSelectedPaid()} disabled={count === 0 || state.isMarkingPaid}>
                 {count ? t('debts.markPaidCount', { count }) : t('debts.settle')}
               </Button>
             </>
