@@ -269,3 +269,25 @@ test('a debt added on a merged duplicate by a device that had not synced yet mov
     expect(await repos.ledger.listDebtEntries(nam2)).toEqual([])
   }
 })
+
+test('importing a backup while sync is on restores it on every device instead of being undone by the next sync', async () => {
+  const api = createMemorySyncApi()
+  const a = device(api)
+  const id = await a.repos.transactions.create(expense('lẩu'))
+  const code = await a.repos.sync.createSecret()
+  const b = device(api)
+  await b.repos.sync.joinWithSecret(code)
+  const backup = await a.repos.backup.exportSnapshot()
+
+  await b.repos.transactions.update(id, expense('lẩu nướng'))
+  await b.repos.transactions.create(expense('cafe'))
+  await b.repos.sync.sync()
+  await a.repos.sync.sync()
+  expect(await notes(a.repos)).toEqual(['cafe', 'lẩu nướng'])
+
+  await a.repos.backup.importSnapshot(backup)
+  await a.repos.sync.sync()
+  await b.repos.sync.sync()
+  expect(await notes(a.repos)).toEqual(['lẩu'])
+  expect(await notes(b.repos)).toEqual(['lẩu'])
+})
