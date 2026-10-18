@@ -1,4 +1,4 @@
-import { HandCoins, Home, List, Settings } from 'lucide-react'
+import { Home, Landmark, List, Settings } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { NavLink } from 'react-router'
 import { cn } from '@/lib/utils'
@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils'
 const TABS = [
   { to: '/', key: 'overview', icon: Home, end: true },
   { to: '/transactions', key: 'transactions', icon: List, end: false },
-  { to: '/debts', key: 'debts', icon: HandCoins, end: false },
+  { to: '/debts', key: 'debts', icon: Landmark, end: false },
   { to: '/settings', key: 'settings', icon: Settings, end: false },
 ] as const
 
