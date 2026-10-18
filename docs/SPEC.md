@@ -501,11 +501,11 @@ Dùng ESLint `no-restricted-imports` để chặn vi phạm tầng:
 - [ ] Banner nhắc backup
 
 **Phase 4: Đồng bộ**
-- [ ] `domain/sync/merge.ts` + integrity + test (gồm property-based)
-- [ ] `api/snapshot.ts` + Vercel Blob private store, mỗi mã đồng bộ một kho
-- [ ] `SyncService` + trigger + mutex + test mô phỏng 2 thiết bị
-- [ ] UI đồng bộ trong Cài đặt, sync indicator, gộp friend trùng tên
-- [ ] Dọn tombstone
+- [x] `domain/sync/merge.ts` + integrity + test (gồm property-based)
+- [x] `api/snapshot.ts` + Vercel Blob private store, mỗi mã đồng bộ một kho
+- [x] `SyncService` + trigger + mutex + test mô phỏng 2 thiết bị
+- [x] UI đồng bộ trong Cài đặt, sync indicator, gộp friend trùng tên
+- [x] Dọn tombstone
 
 **Phase 5: Tùy chọn**
 - [ ] Budget theo category + cảnh báo
