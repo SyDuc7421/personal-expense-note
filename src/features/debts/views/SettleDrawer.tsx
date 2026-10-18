@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button'
 import { Drawer, DrawerContent, DrawerDescription, DrawerFooter, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { formatAmountInput } from '@/lib/amountInput'
 import type { FriendDetailViewModel } from '../viewmodels/useFriendDetailViewModel'
 
 export function SettleDrawer({ vm }: { vm: FriendDetailViewModel }) {
@@ -26,12 +27,12 @@ export function SettleDrawer({ vm }: { vm: FriendDetailViewModel }) {
             <Label htmlFor="settle-amount">{t('debts.settleAmount')}</Label>
             <Input
               id="settle-amount"
-              inputMode="decimal"
+              inputMode="numeric"
               autoComplete="off"
               className="tabular-nums"
               value={state.settle.amount}
               aria-invalid={Boolean(state.settle.error)}
-              onChange={(e) => actions.setSettleAmount(e.target.value)}
+              onChange={(e) => actions.setSettleAmount(formatAmountInput(e.target.value))}
             />
             {state.settle.error && <p className="text-sm text-destructive">{t(state.settle.error)}</p>}
           </div>

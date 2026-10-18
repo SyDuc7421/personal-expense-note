@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { SheetSelect } from '@/components/ui/sheet-select'
 import type { CategoryId } from '@/domain/types'
+import { formatAmountInput } from '@/lib/amountInput'
 import { cn } from '@/lib/utils'
 import { useTransactionFormViewModel } from '../viewmodels/useTransactionFormViewModel'
 
@@ -60,11 +61,11 @@ export function TransactionFormDrawer({ id, onClose }: { id?: string; onClose: (
                   <Label htmlFor="tx-amount">{t('form.amount')}</Label>
                   <Input
                     id="tx-amount"
-                    inputMode="decimal"
+                    inputMode="numeric"
                     autoComplete="off"
                     value={values.amount}
                     aria-invalid={Boolean(errors.amount)}
-                    onChange={(e) => actions.setField('amount', e.target.value)}
+                    onChange={(e) => actions.setField('amount', formatAmountInput(e.target.value))}
                     className="tabular-nums"
                   />
                   <FieldError message={errors.amount} />
@@ -114,10 +115,10 @@ export function TransactionFormDrawer({ id, onClose }: { id?: string; onClose: (
                         <div className="flex min-w-0 items-center gap-1">
                           <Input
                             aria-label={t('form.amount')}
-                            inputMode="decimal"
+                            inputMode="numeric"
                             className="min-w-0 flex-1 tabular-nums"
                             value={split.amount}
-                            onChange={(e) => actions.setSplit(index, { amount: e.target.value })}
+                            onChange={(e) => actions.setSplit(index, { amount: formatAmountInput(e.target.value) })}
                           />
                           <Button type="button" variant="ghost" size="icon" aria-label={t('form.removeSplit')} onClick={() => actions.removeSplit(index)}>
                             <X />

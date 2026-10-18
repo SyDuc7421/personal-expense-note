@@ -38,7 +38,7 @@ test('settle defaults to full balance, accepts a partial amount and updates live
   const { view, nam, repos } = await seed()
   const vm = () => view.result.current
   act(() => vm().actions.openSettle())
-  expect(vm().state.settle).toMatchObject({ open: true, amount: '200000' })
+  expect(vm().state.settle).toMatchObject({ open: true, amount: '200.000' })
   act(() => vm().actions.setSettleAmount('100.000'))
   await act(() => vm().actions.confirmSettle())
   expect(vm().state.settle.open).toBe(false)
