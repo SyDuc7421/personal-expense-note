@@ -3,7 +3,10 @@ import type { SyncService } from '../repositories/types'
 
 type PendingSource = (onChange: (pending: boolean) => void) => () => void
 
-/** Spec 9.5: sync on start, on foreground, when back online, and `debounceMs` after the last local write. Returns cleanup. */
+/**
+ * Spec 9.5: sync on start, on foreground, when back online, and `debounceMs` after the last local write.
+ * Also on `offline`: sync() sees navigator.onLine false and sets the offline status without a request. Returns cleanup.
+ */
 export function startSyncTriggers(
   sync: SyncService,
   opts: { debounceMs?: number; pending?: PendingSource } = {},
@@ -23,6 +26,7 @@ export function startSyncTriggers(
   }
 
   window.addEventListener('online', run)
+  window.addEventListener('offline', run)
   document.addEventListener('visibilitychange', onVisible)
   const unsubscribe = pending((isPending) => {
     clearTimeout(timer)
@@ -33,6 +37,7 @@ export function startSyncTriggers(
   return () => {
     clearTimeout(timer)
     window.removeEventListener('online', run)
+    window.removeEventListener('offline', run)
     document.removeEventListener('visibilitychange', onVisible)
     unsubscribe()
   }

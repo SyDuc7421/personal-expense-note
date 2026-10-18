@@ -29,6 +29,13 @@ test('syncs when the network comes back', () => {
   stop()
 })
 
+test('re-checks when the network drops, so the status turns offline right away', () => {
+  const { sync, stop } = setup()
+  window.dispatchEvent(new Event('offline'))
+  expect(sync.sync).toHaveBeenCalledTimes(2)
+  stop()
+})
+
 test('syncs when the app returns to the foreground', () => {
   const { sync, stop } = setup()
   vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('visible')
