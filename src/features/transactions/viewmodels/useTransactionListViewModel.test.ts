@@ -58,3 +58,9 @@ test('removing a transaction updates the list live', async () => {
   await repos.transactions.remove(id)
   await waitFor(() => expect(result.current.state.groups).toHaveLength(0))
 })
+
+test('opens the edit form from the ?edit= search param', async () => {
+  const { repos } = await seed()
+  const { result } = renderViewModel(() => useTransactionListViewModel({ initialMonth: '2026-10', initialEdit: 'abc' }), repos)
+  expect(result.current.state.formTarget).toBe('abc')
+})

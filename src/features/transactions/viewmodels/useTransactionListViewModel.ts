@@ -1,5 +1,6 @@
 import { addMonths, format, isToday, isYesterday, parseISO } from 'date-fns'
 import { useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router'
 import { useRepositories } from '@/data/RepositoryProvider'
 import { CATEGORIES } from '@/domain/categories'
 import type { CategoryId, TransactionType } from '@/domain/types'
@@ -52,12 +53,16 @@ export interface TransactionListViewModel {
   }
 }
 
-export function useTransactionListViewModel(opts: { initialMonth?: string } = {}): TransactionListViewModel {
+/** `?edit=<id>` in the URL (from Overview) opens that transaction's edit form. */
+export function useTransactionListViewModel(
+  opts: { initialMonth?: string; initialEdit?: string } = {},
+): TransactionListViewModel {
   const { transactions } = useRepositories()
   const locale = useDateLocale()
   const [month, setMonth] = useState(opts.initialMonth ?? monthOf(todayISO()))
   const [filters, setFilters] = useState<TransactionFilters>({})
-  const [formTarget, setFormTarget] = useState<FormTarget>(null)
+  const [params, setParams] = useSearchParams()
+  const [formTarget, setFormTarget] = useState<FormTarget>(opts.initialEdit ?? params.get('edit'))
   const friends = useFriends()
   const query = useRepoQuery(() => transactions.listByMonth(month), [transactions, month])
 
@@ -100,7 +105,10 @@ export function useTransactionListViewModel(opts: { initialMonth?: string } = {}
       setFilter: (patch) => setFilters((f) => ({ ...f, ...patch })),
       openCreate: () => setFormTarget('new'),
       openEdit: (id) => setFormTarget(id),
-      closeForm: () => setFormTarget(null),
+      closeForm() {
+        setFormTarget(null)
+        if (params.has('edit')) setParams({}, { replace: true })
+      },
     },
   }
 }
