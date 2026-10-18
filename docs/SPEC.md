@@ -84,6 +84,7 @@ interface Settlement extends Syncable {
   amount: number;        // friend trả lại mình, > 0
   date: string;
   note: string;
+  debtIds?: string[];    // có khi đánh dấu trả theo khoản; không có = trả theo số tiền
 }
 
 interface Meta {          // KHÔNG đồng bộ, riêng từng thiết bị
@@ -120,9 +121,15 @@ balance(friend) = Σ debts(friend) − Σ settlements(friend)
 ```
 - `> 0`: bạn nợ mình. `< 0`: mình đang nợ bạn (do bạn trả dư). `= 0`: hết nợ.
 - Không lưu trạng thái "đã trả" trên từng Debt. Mọi thứ tính từ tổng.
+- Settlement có thể gắn `debtIds` (trả theo khoản). Field này chỉ đổi cách phân bổ ở 5.3, không đổi công thức balance.
 
 ### 5.3 Tuổi nợ (age)
-Tính theo FIFO: settlements trừ dần vào các debt cũ nhất trước. "Khoản cũ nhất chưa trả" là debt đầu tiên chưa bị trừ hết, và tuổi nợ = số ngày từ `date` của transaction đó tới hôm nay. Đây là giá trị **tính toán**, không lưu.
+Phân bổ settlements vào từng debt (`allocateSettlements`):
+1. Settlement có `debtIds` (theo `date`, rồi `createdAt`) trừ vào đúng các debt đó, mỗi debt tối đa phần còn lại.
+2. Phần thừa (debt đã xóa hoặc bị sửa nhỏ đi) cộng với các settlement không có `debtIds` thành một quỹ chung, trừ FIFO vào các debt cũ nhất trước.
+3. Mỗi debt có `remaining`: `0` = đã trả, `< amount` = trả một phần, `= amount` = chưa trả.
+
+Không có settlement nào gắn `debtIds` thì kết quả giống FIFO thuần. "Khoản cũ nhất chưa trả" là debt đầu tiên chưa bị trừ hết, và tuổi nợ = số ngày từ `date` của transaction đó tới hôm nay. Đây là giá trị **tính toán**, không lưu.
 
 ### 5.4 Chia tiền
 - Chia đều, làm tròn xuống tới đơn vị **1.000 ₫**. Phần dư do làm tròn tính vào phần của mình.
@@ -211,7 +218,8 @@ Bottom tab bar gồm 4 tab: **Tổng quan · Giao dịch · Nợ · Cài đặt*
 - List friend có balance ≠ 0. Sort mặc định theo tuổi nợ cũ nhất, có thể đổi sang sort theo số tiền.
   - Mỗi dòng: tên, balance, "khoản cũ nhất: 23 ngày". Tô màu cảnh báo khi > 30 ngày.
 - Chi tiết friend:
-  - Timeline gồm debts và settlements, xen kẽ theo ngày.
+  - Timeline gồm debts và settlements, xen kẽ theo ngày. Debt hiện trạng thái: đã trả (gạch ngang, nhãn "đã trả"), trả một phần ("còn X"), chưa trả.
+  - Nút **"Chọn"** ở tiêu đề Lịch sử: bật chế độ chọn, các debt còn nợ có ô tick. Đã chọn ≥ 1 khoản thì hai nút dưới thành **"Nhắc (n)"** (chỉ nhắc các khoản đã chọn) và **"Đã trả (n)"** (tạo settlement gắn `debtIds`, amount = tổng phần còn lại; toast có "Hoàn tác").
   - Nút **"Đã trả"**: nhập số tiền, mặc định = toàn bộ balance, có thể nhập một phần.
   - Nút **"Nhắc"**: sinh tin nhắn rồi `navigator.share({ text })` (fallback: copy clipboard + toast).
 - Mẫu tin nhắn nhắc nợ (giọng nhẹ nhàng, có thể chỉnh trong Cài đặt):
@@ -221,7 +229,7 @@ Bottom tab bar gồm 4 tab: **Tổng quan · Giao dịch · Nợ · Cài đặt*
   • 15/10 – Grab: 50.000đ
   Tổng: 200.000đ. Rảnh thì chuyển mình nha!
   ```
-  Chỉ liệt kê các khoản chưa được FIFO trừ hết.
+  Chỉ liệt kê các khoản còn nợ theo phân bổ ở 5.3.
 
 ### 7.4 Cài đặt
 - Quản lý bạn bè: thêm, đổi tên, archive.

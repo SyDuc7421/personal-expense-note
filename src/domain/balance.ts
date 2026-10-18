@@ -1,5 +1,5 @@
 import { differenceInCalendarDays, parseISO } from 'date-fns'
-import type { DebtEntry, TransactionWithDebts } from './types'
+import type { DebtEntry, Settlement, TransactionWithDebts } from './types'
 
 type Amounted = { amount: number; deletedAt?: string | null }
 
@@ -27,6 +27,40 @@ export function fifoOutstanding(entries: DebtEntry[], settledTotal: number): (De
     credit -= used
     if (entry.amount - used > 0) result.push({ ...entry, remaining: entry.amount - used })
   }
+  return result
+}
+
+export type DebtAllocation = DebtEntry & { remaining: number }
+
+/**
+ * All entries oldest-first (date, then debtId) with what is still owed on each.
+ * Targeted settlements pay their own debts first; their overflow (debt deleted or shrunk)
+ * joins the amount-only settlements in one pool applied FIFO.
+ */
+export function allocateSettlements(
+  entries: DebtEntry[],
+  settlements: Pick<Settlement, 'amount' | 'date' | 'createdAt' | 'debtIds'>[],
+): DebtAllocation[] {
+  const result = [...entries]
+    .sort((a, b) => a.date.localeCompare(b.date) || a.debtId.localeCompare(b.debtId))
+    .map((e) => ({ ...e, remaining: e.amount }))
+  const pay = (debts: DebtAllocation[], credit: number) => {
+    for (const d of debts) {
+      const used = Math.min(credit, d.remaining)
+      d.remaining -= used
+      credit -= used
+    }
+    return credit
+  }
+  const targeted = settlements
+    .filter((s) => s.debtIds)
+    .sort((a, b) => a.date.localeCompare(b.date) || a.createdAt.localeCompare(b.createdAt))
+  let pool = sum(settlements.filter((s) => !s.debtIds))
+  for (const s of targeted) {
+    const ids = new Set(s.debtIds)
+    pool += pay(result.filter((d) => ids.has(d.debtId)), s.amount)
+  }
+  pay(result, pool)
   return result
 }
 
