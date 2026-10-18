@@ -40,7 +40,7 @@ export function TransactionFormDrawer({ id, onClose }: { id?: string; onClose: (
                 void actions.save()
               }}
             >
-              <div className="flex flex-col gap-4 overflow-y-auto px-4 pb-4">
+              <div className="flex flex-col gap-4 overflow-x-hidden overflow-y-auto px-4 pb-4">
                 <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label={t('form.type')}>
                   {(['expense', 'income'] as const).map((type) => (
                     <Button
@@ -91,6 +91,7 @@ export function TransactionFormDrawer({ id, onClose }: { id?: string; onClose: (
                     <Input
                       id="tx-date"
                       type="date"
+                      className="w-full min-w-0"
                       value={values.date}
                       onChange={(e) => e.target.value && actions.setField('date', e.target.value)}
                     />

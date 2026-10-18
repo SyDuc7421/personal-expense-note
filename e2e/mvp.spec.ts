@@ -74,3 +74,16 @@ test('sheet select picks a category and filters the list', async ({ page }) => {
   await expect(page.getByRole('button', { name: /grab/ })).toBeVisible()
   await expect(page.getByRole('button', { name: /cafe/ })).toHaveCount(0)
 })
+
+test('transaction form fits the drawer: date input stays in its column, no horizontal scroll', async ({ page }) => {
+  await page.goto('/transactions')
+  await page.getByRole('button', { name: 'Thêm giao dịch' }).click()
+  const dialog = page.getByRole('dialog')
+  const dialogBox = (await dialog.boundingBox())!
+  const dateBox = (await page.getByLabel('Ngày').boundingBox())!
+  const categoryBox = (await page.getByRole('button', { name: 'Danh mục' }).boundingBox())!
+  expect(dateBox.x + dateBox.width).toBeLessThanOrEqual(dialogBox.x + dialogBox.width)
+  expect(Math.abs(dateBox.height - categoryBox.height)).toBeLessThanOrEqual(1)
+  const overflow = await dialog.locator('form > div').first().evaluate((el) => el.scrollWidth - el.clientWidth)
+  expect(overflow).toBe(0)
+})

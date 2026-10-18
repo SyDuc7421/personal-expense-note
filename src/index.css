@@ -209,6 +209,19 @@
   input, select, textarea {
     font-size: 16px;
   }
+  /* iOS Safari renders date inputs as a native control with its own min-width and
+     padding, so they overflow grid columns (horizontal scroll) and grow taller. */
+  input[type="date"] {
+    -webkit-appearance: none;
+    appearance: none;
+    display: block;
+    min-width: 0;
+    max-width: 100%;
+  }
+  input[type="date"]::-webkit-date-and-time-value {
+    text-align: left;
+    margin: 0;
+  }
   .tabular-nums {
     font-variant-numeric: tabular-nums;
   }
