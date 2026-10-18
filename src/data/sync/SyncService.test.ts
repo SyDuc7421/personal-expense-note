@@ -1,3 +1,4 @@
+import Dexie from 'dexie'
 import { createTestRepositories } from '@/data/testing'
 import type { DomainError } from '@/domain/errors'
 import type { NewTransaction } from '@/domain/types'
@@ -157,6 +158,7 @@ test('three conflicts in a row → error conflict', async () => {
   const api = createMemorySyncApi()
   const a = device(api)
   await a.repos.sync.createSecret()
+  await a.repos.transactions.create(expense('cafe'))
   api.conflictsLeft = 3
   await a.repos.sync.sync()
   expect(a.repos.sync.getStatus()).toEqual({ phase: 'error', error: 'conflict' })
@@ -197,6 +199,7 @@ test('concurrent sync() calls run one at a time and a write made during the uplo
   const api = createMemorySyncApi()
   const a = device(api)
   const code = await a.repos.sync.createSecret()
+  await a.repos.transactions.create(expense('early'))
 
   const gate = deferred()
   api.beforePut = () => gate.promise
@@ -210,8 +213,8 @@ test('concurrent sync() calls run one at a time and a write made during the uplo
   await Promise.all([first, second])
 
   expect(api.maxConcurrent).toBe(1)
-  expect(api.snapshots.get(code)!.transactions.map((t) => t.note)).toEqual(['late'])
-  expect(await notes(a.repos)).toEqual(['late'])
+  expect(api.snapshots.get(code)!.transactions.map((t) => t.note).sort()).toEqual(['early', 'late'])
+  expect(await notes(a.repos)).toEqual(['early', 'late'])
 })
 
 test('hasPendingChanges is false after sync and true after a local write', async () => {
@@ -290,4 +293,71 @@ test('importing a backup while sync is on restores it on every device instead of
   await b.repos.sync.sync()
   expect(await notes(a.repos)).toEqual(['lẩu'])
   expect(await notes(b.repos)).toEqual(['lẩu'])
+})
+
+test('a local write still counts as pending when another device dated its records in the future', async () => {
+  const api = createMemorySyncApi()
+  const a = device(api)
+  const code = await a.repos.sync.createSecret()
+  const b = device(api)
+  await b.repos.sync.joinWithSecret(code)
+  const id = await b.repos.transactions.create(expense('from the future'))
+  const tx = (await b.db.transactions.get(id))!
+  await b.db.transactions.put({ ...tx, updatedAt: '2099-01-01T00:00:00.000Z' })
+  await b.repos.sync.sync()
+  await a.repos.sync.sync()
+
+  await a.repos.transactions.create(expense('now'))
+  expect(await a.repos.sync.hasPendingChanges()).toBe(true)
+})
+
+test('a sync with nothing new does not upload again', async () => {
+  const api = createMemorySyncApi()
+  const a = device(api)
+  await a.repos.transactions.create(expense('lẩu'))
+  await a.repos.sync.createSecret()
+  const puts = api.puts
+  await a.repos.sync.sync()
+  expect(api.puts).toBe(puts)
+  expect(a.repos.sync.getStatus()).toEqual({ phase: 'idle' })
+  expect(await a.repos.sync.hasPendingChanges()).toBe(false)
+})
+
+test('turning sync off while a sync is uploading leaves it off', async () => {
+  const api = createMemorySyncApi()
+  const a = device(api)
+  await a.repos.sync.createSecret()
+  await a.repos.transactions.create(expense('cafe'))
+  const gate = deferred()
+  api.beforePut = () => gate.promise
+  const running = a.repos.sync.sync()
+  await vi.waitFor(() => expect(api.pendingPuts).toBe(1))
+  await a.repos.sync.disable()
+  gate.release()
+  await running
+  expect(a.repos.sync.getStatus()).toEqual({ phase: 'disabled' })
+  expect(await a.repos.meta.get('remoteEtag')).toBeUndefined()
+})
+
+test('an edit made while the merge is reading local data is never overwritten by the merge', async () => {
+  const api = createMemorySyncApi()
+  const a = device(api)
+  const id = await a.repos.transactions.create(expense('lẩu'))
+  const code = await a.repos.sync.createSecret()
+  const b = device(api)
+  await b.repos.sync.joinWithSecret(code)
+  // The server now holds a newer version, so the merge rewrites this record on A.
+  await b.repos.transactions.update(id, expense('lẩu B'))
+  await b.repos.sync.sync()
+
+  let edit: Promise<void> | undefined
+  a.db.transactions.hook('reading', (obj) => {
+    // Fires while the merge reads A's transactions: edit the same record right then, outside the merge's
+    // transaction zone like a real UI event (otherwise Dexie would run it as a child of the merge transaction).
+    edit ??= Dexie.ignoreTransaction(() => a.repos.transactions.update(id, expense('lẩu A')))
+    return obj
+  })
+  await a.repos.sync.sync()
+  await edit
+  expect(await notes(a.repos)).toEqual(['lẩu A'])
 })

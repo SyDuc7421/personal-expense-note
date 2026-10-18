@@ -293,7 +293,7 @@ Yêu cầu:
 | `PUT /api/snapshot` | Body là snapshot. Header `If-Match: <etag>` (hoặc `If-None-Match: *` khi tạo lần đầu). Ghi bằng `put(..., { access: 'private', allowOverwrite: true, ifMatch })`. ETag không khớp → `412`. Thành công → trả ETag mới. |
 
 - **Auth / kho dữ liệu**: header `Authorization: Bearer <secret>`. Secret do client sinh: 32 byte ngẫu nhiên, base64url (43 ký tự). Server chỉ nhận secret khớp `^[A-Za-z0-9_-]{43}$`, sai định dạng thì `401`. Pathname blob = `snapshots/<sha256 hex của secret>.json`, nên server không lưu secret và không có env `SYNC_SECRET`. Không có cách khôi phục khi mất mã.
-- Validate body (zod): đúng `format`, `schemaVersion`, kích thước < 5 MB.
+- Validate body (zod): đúng `format`, `schemaVersion`, kích thước < 4 MB (Vercel Functions chặn body > 4.5 MB).
 - Không log nội dung snapshot.
 - Token Vercel Blob chỉ nằm ở server (env), **không bao giờ** ra client.
 

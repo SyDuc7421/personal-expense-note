@@ -37,7 +37,19 @@ export function FriendsSection({ vm }: { vm: SettingsViewModel }) {
       {state.friends.length === 0 ? (
         <p className="py-2 text-sm text-muted-foreground">{t('settings.noFriends')}</p>
       ) : (
-        <ul className="divide-y">
+        <Button
+          variant="ghost"
+          className="justify-between px-0"
+          aria-expanded={state.friendsExpanded}
+          aria-controls="friend-list"
+          onClick={actions.toggleFriendsList}
+        >
+          {t(state.friendsExpanded ? 'settings.hideFriends' : 'settings.showFriends', { count: state.friends.length })}
+          <ChevronDown className={cn('transition-transform', state.friendsExpanded && 'rotate-180')} />
+        </Button>
+      )}
+      {state.friendsExpanded && state.friends.length > 0 && (
+        <ul id="friend-list" className="divide-y">
           {state.friends.map((f) =>
             state.editing?.id === f.id ? (
               <li key={f.id} className="flex items-center gap-1 py-1">
@@ -56,42 +68,27 @@ export function FriendsSection({ vm }: { vm: SettingsViewModel }) {
                 </Button>
               </li>
             ) : (
-              <li key={f.id} className="py-1">
-                <button
-                  type="button"
-                  className="flex min-h-11 w-full items-center gap-2 text-left"
-                  aria-expanded={state.expandedFriendId === f.id}
-                  onClick={() => actions.toggleFriend(f.id)}
+              <li key={f.id} className="flex items-center gap-1 py-1">
+                <span className={f.archived ? 'min-w-0 flex-1 truncate text-muted-foreground' : 'min-w-0 flex-1 truncate'}>
+                  {f.name}
+                  {f.archived && <span className="ml-1 text-xs">({t('settings.archived')})</span>}
+                </span>
+                <Amount label={f.balanceLabel} tone="muted" className="text-sm" />
+                <Button variant="ghost" size="icon" aria-label={`${t('settings.rename')} ${f.name}`} onClick={() => actions.startEdit(f.id)}>
+                  <Pencil />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label={`${t(f.archived ? 'settings.unarchive' : 'settings.archive')} ${f.name}`}
+                  onClick={() => void actions.toggleArchive(f.id)}
                 >
-                  <span className={f.archived ? 'min-w-0 flex-1 truncate text-muted-foreground' : 'min-w-0 flex-1 truncate'}>
-                    {f.name}
-                    {f.archived && <span className="ml-1 text-xs">({t('settings.archived')})</span>}
-                  </span>
-                  <Amount label={f.balanceLabel} tone="muted" className="text-sm" />
-                  <ChevronDown
-                    aria-hidden
-                    className={cn('size-4 text-muted-foreground transition-transform', state.expandedFriendId === f.id && 'rotate-180')}
-                  />
-                </button>
-                {state.expandedFriendId === f.id && (
-                  <div className="flex justify-end gap-1">
-                    <Button variant="ghost" size="icon" aria-label={`${t('settings.rename')} ${f.name}`} onClick={() => actions.startEdit(f.id)}>
-                      <Pencil />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      aria-label={`${t(f.archived ? 'settings.unarchive' : 'settings.archive')} ${f.name}`}
-                      onClick={() => void actions.toggleArchive(f.id)}
-                    >
-                      {f.archived ? <ArchiveRestore /> : <Archive />}
-                    </Button>
-                    {f.canDelete && (
-                      <Button variant="ghost" size="icon" aria-label={`${t('common.delete')} ${f.name}`} onClick={() => void actions.deleteFriend(f.id)}>
-                        <Trash2 />
-                      </Button>
-                    )}
-                  </div>
+                  {f.archived ? <ArchiveRestore /> : <Archive />}
+                </Button>
+                {f.canDelete && (
+                  <Button variant="ghost" size="icon" aria-label={`${t('common.delete')} ${f.name}`} onClick={() => void actions.deleteFriend(f.id)}>
+                    <Trash2 />
+                  </Button>
                 )}
               </li>
             ),

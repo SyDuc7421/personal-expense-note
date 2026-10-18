@@ -181,6 +181,20 @@ describe('mergeDuplicates', () => {
     expect(new Set(debts.map((d) => d.friendId)).size).toBe(debts.length)
   })
 
+  test('targeted settlements follow a folded debt to the kept debt', async () => {
+    const { db, repos, nam, nam2 } = await twoNams()
+    const id = await repos.transactions.create(lau([{ friendId: nam, amount: 100000 }]))
+    const keptDebt = (await repos.transactions.get(id))!.debts[0].id
+    const now = new Date().toISOString()
+    const foldedDebt = crypto.randomUUID()
+    await db.debts.add({ id: foldedDebt, transactionId: id, friendId: nam2, amount: 50000, createdAt: now, updatedAt: now, deletedAt: null })
+    const sid = await repos.ledger.addSettlement({ friendId: nam2, amount: 50000, date: '2026-10-13', note: '', debtIds: [foldedDebt] })
+
+    await repos.friends.mergeDuplicates()
+
+    expect((await db.settlements.get(sid))!.debtIds).toEqual([keptDebt])
+  })
+
   test('returns 0 when there are no duplicates', async () => {
     const { repos } = await setup()
     expect(await repos.friends.mergeDuplicates()).toBe(0)

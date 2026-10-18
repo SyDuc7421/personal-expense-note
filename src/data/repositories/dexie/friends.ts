@@ -78,6 +78,7 @@ export function createFriendRepository(db: ExpenseNoteDB): FriendRepository {
         for (const [keeper, ...duplicates] of findDuplicateFriendGroups(await db.friends.toArray())) {
           for (const dup of duplicates) {
             const keeperDebts = await db.debts.where('friendId').equals(keeper.id).filter(isAlive).toArray()
+            const foldedInto = new Map<string, string>()
             for (const debt of await db.debts.where('friendId').equals(dup.id).filter(isAlive).toArray()) {
               // One friend must not owe twice on one transaction (the edit form would reject it): fold into the keeper's debt.
               const existing = keeperDebts.find((d) => d.transactionId === debt.transactionId)
@@ -86,12 +87,15 @@ export function createFriendRepository(db: ExpenseNoteDB): FriendRepository {
                 Object.assign(existing, touch(existing))
                 await db.debts.put(existing)
                 await db.debts.put({ ...debt, ...tombstone(debt) })
+                foldedInto.set(debt.id, existing.id)
               } else {
                 await db.debts.put({ ...debt, friendId: keeper.id, ...touch(debt) })
               }
             }
             for (const s of await db.settlements.where('friendId').equals(dup.id).filter(isAlive).toArray()) {
-              await db.settlements.put({ ...s, friendId: keeper.id, ...touch(s) })
+              // Keep "paid per item" pointing at the debt that absorbed a folded one.
+              const debtIds = s.debtIds && [...new Set(s.debtIds.map((id) => foldedInto.get(id) ?? id))]
+              await db.settlements.put({ ...s, friendId: keeper.id, ...(debtIds && { debtIds }), ...touch(s) })
             }
             await db.friends.put({ ...dup, ...tombstone(dup) })
             removed++

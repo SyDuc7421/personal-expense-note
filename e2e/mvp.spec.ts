@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { addFriends, addSplitExpense, expectNoHorizontalScroll } from './helpers/app'
+import { addFriends, addSplitExpense, expectNoHorizontalScroll, showFriendList } from './helpers/app'
 import { expectTouchTargets } from './helpers/touchTargets'
 
 test('split expense creates debts; partial payment; delete removes debts', async ({ page }) => {
@@ -50,6 +50,7 @@ test('export, clear all, import restores data', async ({ page }) => {
 
   await page.getByTestId('import-file').setInputFiles(file)
   await page.getByRole('dialog').getByRole('button', { name: 'Import JSON' }).click()
+  await showFriendList(page)
   await expect(page.getByText('Bình', { exact: true })).toBeVisible()
   await page.getByRole('link', { name: 'Giao dịch' }).click()
   await expect(page.getByRole('button', { name: /cafe/ })).toContainText('trả hộ Bình')

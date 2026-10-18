@@ -33,6 +33,20 @@ export default defineConfig({
       },
     }),
   ],
+  build: {
+    rolldownOptions: {
+      output: {
+        // One app chunk was > 500 kB; split heavy vendors so no single chunk trips the warning.
+        codeSplitting: {
+          groups: [
+            { name: 'charts', test: /node_modules[\\/](recharts|d3-|victory-vendor|es-toolkit|immer|reselect|@reduxjs|react-redux)/ },
+            { name: 'react', test: /node_modules[\\/](react|react-dom|scheduler|react-router)[\\/]/ },
+            { name: 'vendor', test: /node_modules[\\/]/ },
+          ],
+        },
+      },
+    },
+  },
   resolve: {
     alias: { '@': path.resolve(import.meta.dirname, './src') },
   },

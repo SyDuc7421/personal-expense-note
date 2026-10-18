@@ -7,13 +7,19 @@ export interface SnapshotStore {
   write(pathname: string, body: string, ifMatch: string | null): Promise<{ etag: string } | null>
 }
 
-export const MAX_SNAPSHOT_BYTES = 5 * 1024 * 1024
+/** Below the 4.5 MB request body cap of Vercel Functions, so the client sees our 413 and not a platform error. */
+export const MAX_SNAPSHOT_BYTES = 4 * 1024 * 1024
 /** 32 random bytes, base64url without padding. Generated on the client. */
 export const SECRET_PATTERN = /^[A-Za-z0-9_-]{43}$/
 
 /** One blob per sync code; the server never stores the code itself. */
 export function snapshotPathname(secret: string): string {
   return `snapshots/${createHash('sha256').update(secret).digest('hex')}.json`
+}
+
+/** Compressed responses (Blob CDN, Vercel edge) carry weak ETags `W/"…"`; Blob's ifMatch needs the strong form. */
+export function strongEtag(etag: string): string {
+  return etag.replace(/^W\//, '')
 }
 
 function respond(status: number, body?: string, headers: Record<string, string> = {}): Response {
@@ -26,7 +32,8 @@ function bearer(request: Request): string | null {
 }
 
 async function handlePut(request: Request, store: SnapshotStore, pathname: string): Promise<Response> {
-  const ifMatch = request.headers.get('if-match')
+  const header = request.headers.get('if-match')
+  const ifMatch = header && strongEtag(header)
   const createOnly = request.headers.get('if-none-match') === '*'
   if (!ifMatch && !createOnly) return respond(428)
 
