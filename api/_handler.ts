@@ -16,6 +16,11 @@ export function snapshotPathname(secret: string): string {
   return `snapshots/${createHash('sha256').update(secret).digest('hex')}.json`
 }
 
+/** Compressed responses (Blob CDN, Vercel edge) carry weak ETags `W/"…"`; Blob's ifMatch needs the strong form. */
+export function strongEtag(etag: string): string {
+  return etag.replace(/^W\//, '')
+}
+
 function respond(status: number, body?: string, headers: Record<string, string> = {}): Response {
   return new Response(body ?? null, { status, headers: { 'cache-control': 'no-store', ...headers } })
 }
@@ -26,7 +31,8 @@ function bearer(request: Request): string | null {
 }
 
 async function handlePut(request: Request, store: SnapshotStore, pathname: string): Promise<Response> {
-  const ifMatch = request.headers.get('if-match')
+  const header = request.headers.get('if-match')
+  const ifMatch = header && strongEtag(header)
   const createOnly = request.headers.get('if-none-match') === '*'
   if (!ifMatch && !createOnly) return respond(428)
 

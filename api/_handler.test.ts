@@ -1,5 +1,5 @@
 // @vitest-environment node
-import { handleSnapshot, MAX_SNAPSHOT_BYTES, snapshotPathname, type SnapshotStore } from './_handler.js'
+import { handleSnapshot, MAX_SNAPSHOT_BYTES, snapshotPathname, strongEtag, type SnapshotStore } from './_handler.js'
 
 const A = 'a'.repeat(43)
 const B = 'b'.repeat(43)
@@ -119,4 +119,15 @@ test('PUT body over 5 MB returns 413', async () => {
 test('405 for other methods', async () => {
   const req = new Request(URL, { method: 'DELETE', headers: { authorization: `Bearer ${A}` } })
   expect((await handleSnapshot(req, memoryStore())).status).toBe(405)
+})
+
+test('strongEtag drops the weak prefix compression adds', () => {
+  expect(strongEtag('W/"abc"')).toBe('"abc"')
+  expect(strongEtag('"abc"')).toBe('"abc"')
+})
+
+test('PUT accepts a weak If-Match (the CDN weakens ETags when it compresses responses)', async () => {
+  const store = memoryStore()
+  const etag = (await handleSnapshot(put(A, snapshot(), { 'if-none-match': '*' }), store)).headers.get('etag')!
+  expect((await handleSnapshot(put(A, snapshot(), { 'if-match': `W/${etag}` }), store)).status).toBe(200)
 })

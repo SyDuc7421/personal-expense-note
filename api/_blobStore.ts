@@ -1,5 +1,5 @@
 import { BlobNotFoundError, BlobPreconditionFailedError, get, head, put } from '@vercel/blob'
-import type { SnapshotStore } from './_handler.js'
+import { strongEtag, type SnapshotStore } from './_handler.js'
 
 /** SnapshotStore on the Vercel Blob private store linked to the project (BLOB_READ_WRITE_TOKEN). */
 export function createBlobStore(): SnapshotStore {
@@ -7,7 +7,7 @@ export function createBlobStore(): SnapshotStore {
     async read(pathname) {
       const result = await get(pathname, { access: 'private', useCache: false })
       if (!result || result.statusCode !== 200) return null
-      return { body: await new Response(result.stream).text(), etag: result.blob.etag }
+      return { body: await new Response(result.stream).text(), etag: strongEtag(result.blob.etag) }
     },
 
     async write(pathname, body, ifMatch) {
