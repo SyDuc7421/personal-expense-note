@@ -62,3 +62,15 @@ test('every tab fits the viewport and has large touch targets', async ({ page })
     await expectTouchTargets(page)
   }
 })
+
+test('sheet select picks a category and filters the list', async ({ page }) => {
+  await addSplitExpense(page, '35000', 'cafe', [])
+  await addSplitExpense(page, '50000', 'grab', [])
+  await page.getByRole('button', { name: 'Danh mục' }).click()
+  await expect(page.getByRole('listbox')).toBeVisible()
+  await expectTouchTargets(page)
+  await page.getByRole('option', { name: /Di chuyển/ }).click()
+  await expect(page.getByRole('button', { name: 'Danh mục' })).toContainText('Di chuyển')
+  await expect(page.getByRole('button', { name: /grab/ })).toBeVisible()
+  await expect(page.getByRole('button', { name: /cafe/ })).toHaveCount(0)
+})

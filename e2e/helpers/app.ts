@@ -16,8 +16,12 @@ export async function addSplitExpense(page: Page, amount: string, note: string, 
   await page.getByLabel('Số tiền (₫)').first().fill(amount)
   await page.getByLabel('Ghi chú').fill(note)
   for (let i = 0; i < friends.length; i++) await page.getByRole('button', { name: 'Thêm bạn' }).click()
-  const selects = page.getByLabel('Chọn bạn')
-  for (const [i, name] of friends.entries()) await selects.nth(i).selectOption({ label: name })
+  const pickers = page.getByRole('button', { name: 'Chọn bạn' })
+  for (const [i, name] of friends.entries()) {
+    await pickers.nth(i).click()
+    await page.getByRole('option', { name }).click()
+    await expect(page.getByRole('listbox')).toBeHidden()
+  }
   if (friends.length) await page.getByRole('button', { name: 'Chia đều' }).click()
   await page.getByRole('button', { name: 'Lưu' }).click()
   await expect(page.getByRole('dialog')).toBeHidden()

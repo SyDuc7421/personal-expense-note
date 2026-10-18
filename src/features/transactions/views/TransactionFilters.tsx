@@ -1,7 +1,7 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
-import { NativeSelect } from '@/components/ui/native-select'
+import { SheetSelect } from '@/components/ui/sheet-select'
 import type { CategoryId, TransactionType } from '@/domain/types'
 import type { TransactionListViewModel } from '../viewmodels/useTransactionListViewModel'
 
@@ -20,27 +20,27 @@ export function TransactionFilters({ vm }: { vm: TransactionListViewModel }) {
         </Button>
       </div>
       <div className="grid grid-cols-3 gap-2">
-        <NativeSelect
-          aria-label={t('transactions.filterCategory')}
+        <SheetSelect
+          label={t('transactions.filterCategory')}
+          placeholder={t('transactions.filterCategory')}
           value={state.filters.category ?? ''}
-          onChange={(e) => actions.setFilter({ category: (e.target.value || undefined) as CategoryId | undefined })}
-        >
-          <option value="">{t('transactions.filterCategory')}</option>
-          {state.categories.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.icon} {t(`categories.${c.id}`)}
-            </option>
-          ))}
-        </NativeSelect>
-        <NativeSelect
-          aria-label={t('transactions.filterType')}
+          onValueChange={(v) => actions.setFilter({ category: (v || undefined) as CategoryId | undefined })}
+          options={[
+            { value: '', label: t('common.all') },
+            ...state.categories.map((c) => ({ value: c.id, label: t(`categories.${c.id}`), icon: c.icon })),
+          ]}
+        />
+        <SheetSelect
+          label={t('transactions.filterType')}
+          placeholder={t('transactions.filterType')}
           value={state.filters.type ?? ''}
-          onChange={(e) => actions.setFilter({ type: (e.target.value || undefined) as TransactionType | undefined })}
-        >
-          <option value="">{t('transactions.filterType')}</option>
-          <option value="expense">{t('types.expense')}</option>
-          <option value="income">{t('types.income')}</option>
-        </NativeSelect>
+          onValueChange={(v) => actions.setFilter({ type: (v || undefined) as TransactionType | undefined })}
+          options={[
+            { value: '', label: t('common.all') },
+            { value: 'expense', label: t('types.expense') },
+            { value: 'income', label: t('types.income') },
+          ]}
+        />
         <Button
           variant={state.filters.hasDebts ? 'default' : 'outline'}
           aria-pressed={Boolean(state.filters.hasDebts)}

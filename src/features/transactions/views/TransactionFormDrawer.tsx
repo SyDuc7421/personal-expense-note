@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } from '@/components/ui/drawer'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { NativeSelect } from '@/components/ui/native-select'
+import { SheetSelect } from '@/components/ui/sheet-select'
 import type { CategoryId } from '@/domain/types'
 import { cn } from '@/lib/utils'
 import { useTransactionFormViewModel } from '../viewmodels/useTransactionFormViewModel'
@@ -78,17 +78,13 @@ export function TransactionFormDrawer({ id, onClose }: { id?: string; onClose: (
                 <div className="grid grid-cols-2 gap-2">
                   <div className="flex min-w-0 flex-col gap-1.5">
                     <Label htmlFor="tx-category">{t('form.category')}</Label>
-                    <NativeSelect
+                    <SheetSelect
                       id="tx-category"
+                      label={t('form.category')}
                       value={values.category}
-                      onChange={(e) => actions.setField('category', e.target.value as CategoryId)}
-                    >
-                      {state.categories.map((c) => (
-                        <option key={c.id} value={c.id}>
-                          {c.icon} {t(`categories.${c.id}`)}
-                        </option>
-                      ))}
-                    </NativeSelect>
+                      onValueChange={(v) => actions.setField('category', v as CategoryId)}
+                      options={state.categories.map((c) => ({ value: c.id, label: t(`categories.${c.id}`), icon: c.icon }))}
+                    />
                   </div>
                   <div className="flex min-w-0 flex-col gap-1.5">
                     <Label htmlFor="tx-date">{t('form.date')}</Label>
@@ -106,19 +102,13 @@ export function TransactionFormDrawer({ id, onClose }: { id?: string; onClose: (
                     <legend className="mb-1.5 text-sm font-medium">{t('form.splits')}</legend>
                     {values.splits.map((split, index) => (
                       <div key={split.key} className="grid grid-cols-2 gap-2">
-                        <NativeSelect
-                          aria-label={t('form.chooseFriend')}
+                        <SheetSelect
+                          label={t('form.chooseFriend')}
                           className="min-w-0"
                           value={split.friendId}
-                          onChange={(e) => actions.setSplit(index, { friendId: e.target.value })}
-                        >
-                          <option value="">{t('form.chooseFriend')}</option>
-                          {state.friends.map((f) => (
-                            <option key={f.id} value={f.id}>
-                              {f.name}
-                            </option>
-                          ))}
-                        </NativeSelect>
+                          onValueChange={(v) => actions.setSplit(index, { friendId: v })}
+                          options={state.friends.map((f) => ({ value: f.id, label: f.name }))}
+                        />
                         {/* Amount + remove share the second column so it lines up with Date above. */}
                         <div className="flex min-w-0 items-center gap-1">
                           <Input
