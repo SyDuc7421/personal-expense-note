@@ -5,7 +5,7 @@ import { toast } from 'sonner'
 import { useRepositories } from '@/data/RepositoryProvider'
 import { fifoOutstanding } from '@/domain/balance'
 import { buildReminder } from '@/domain/reminder'
-import { parseAmountInput } from '@/lib/amountInput'
+import { formatAmountInput, parseAmountInput } from '@/lib/amountInput'
 import { formatShortDate, formatVND, todayISO } from '@/lib/format'
 import { shareText } from '@/lib/share'
 import { errorKey } from '@/features/shared/viewmodels/errors'
@@ -99,7 +99,7 @@ export function useFriendDetailViewModel(friendId: string, opts: { today?: Date 
     },
     actions: {
       back: () => navigate('/debts'),
-      openSettle: () => setSettle({ open: true, amount: balance > 0 ? String(balance) : '', error: null, isSaving: false }),
+      openSettle: () => setSettle({ open: true, amount: balance > 0 ? formatAmountInput(String(balance)) : '', error: null, isSaving: false }),
       setSettleAmount: (amount) => setSettle((s) => ({ ...s, amount, error: null })),
       closeSettle: () => setSettle((s) => ({ ...s, open: false })),
       async remind() {

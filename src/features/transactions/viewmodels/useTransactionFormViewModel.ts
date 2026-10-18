@@ -3,7 +3,7 @@ import { useRepositories } from '@/data/RepositoryProvider'
 import { CATEGORIES, detectCategory } from '@/domain/categories'
 import { computeSplit, SplitError } from '@/domain/split'
 import type { CategoryId, NewTransaction, TransactionType } from '@/domain/types'
-import { parseAmountInput } from '@/lib/amountInput'
+import { formatAmountInput, parseAmountInput } from '@/lib/amountInput'
 import { formatVND, todayISO } from '@/lib/format'
 import { errorKey } from '@/features/shared/viewmodels/errors'
 import { useFriends, type FriendOption } from '@/features/shared/viewmodels/useFriends'
@@ -87,11 +87,11 @@ export function useTransactionFormViewModel({ id, onDone }: { id?: string; onDon
           setRawInput(tx.rawInput)
           setValues({
             type: tx.type,
-            amount: String(tx.amount),
+            amount: formatAmountInput(String(tx.amount)),
             category: tx.category,
             note: tx.note,
             date: tx.date,
-            splits: tx.debts.map((d) => ({ key: d.id, friendId: d.friendId, amount: String(d.amount) })),
+            splits: tx.debts.map((d) => ({ key: d.id, friendId: d.friendId, amount: formatAmountInput(String(d.amount)) })),
           })
         } else {
           setErrors({ form: 'errors.notFound' })
@@ -176,7 +176,7 @@ export function useTransactionFormViewModel({ id, onDone }: { id?: string; onDon
         if (!(amount > 0) || values.splits.length === 0) return
         try {
           const { perFriend } = computeSplit(amount, values.splits.length, {})
-          updateSplits((s) => s.map((row) => ({ ...row, amount: String(perFriend) })))
+          updateSplits((s) => s.map((row) => ({ ...row, amount: formatAmountInput(String(perFriend)) })))
           setErrors((e) => ({ ...e, splits: undefined }))
         } catch (e) {
           if (e instanceof SplitError) setErrors((prev) => ({ ...prev, splits: `parse.${e.code}` }))

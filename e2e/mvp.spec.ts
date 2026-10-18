@@ -16,8 +16,9 @@ test('split expense creates debts; partial payment; delete removes debts', async
   // Nam pays back 100k
   await page.getByRole('button', { name: /^Nam/ }).click()
   await page.getByRole('button', { name: 'Đã trả' }).click()
-  await expect(page.getByLabel('Số tiền (₫)')).toHaveValue('150000')
+  await expect(page.getByLabel('Số tiền (₫)')).toHaveValue('150.000')
   await page.getByLabel('Số tiền (₫)').fill('100000')
+  await expect(page.getByLabel('Số tiền (₫)')).toHaveValue('100.000')
   await page.getByRole('button', { name: 'Lưu' }).click()
   await expect(page.getByText('50.000 ₫').first()).toBeVisible()
   await expectTouchTargets(page)
