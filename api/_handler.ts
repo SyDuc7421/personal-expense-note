@@ -7,7 +7,8 @@ export interface SnapshotStore {
   write(pathname: string, body: string, ifMatch: string | null): Promise<{ etag: string } | null>
 }
 
-export const MAX_SNAPSHOT_BYTES = 5 * 1024 * 1024
+/** Below the 4.5 MB request body cap of Vercel Functions, so the client sees our 413 and not a platform error. */
+export const MAX_SNAPSHOT_BYTES = 4 * 1024 * 1024
 /** 32 random bytes, base64url without padding. Generated on the client. */
 export const SECRET_PATTERN = /^[A-Za-z0-9_-]{43}$/
 

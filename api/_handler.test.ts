@@ -131,3 +131,7 @@ test('PUT accepts a weak If-Match (the CDN weakens ETags when it compresses resp
   const etag = (await handleSnapshot(put(A, snapshot(), { 'if-none-match': '*' }), store)).headers.get('etag')!
   expect((await handleSnapshot(put(A, snapshot(), { 'if-match': `W/${etag}` }), store)).status).toBe(200)
 })
+
+test('size limit sits below the 4.5 MB body cap of Vercel Functions, so our 413 is the one users get', () => {
+  expect(MAX_SNAPSHOT_BYTES).toBeLessThan(4.5 * 1024 * 1024)
+})
