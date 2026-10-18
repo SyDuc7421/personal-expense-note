@@ -98,3 +98,14 @@ test('purgeTombstones drops tombstones older than 180 days and reports their ids
   expect(kept.friends.map((f) => f.id)).toEqual(['recent', 'live'])
   expect(purged).toEqual({ friends: ['old'], transactions: [], debts: [], settlements: [] })
 })
+
+test('tiebreak ignores key order (zod reorders parsed remote records)', () => {
+  const nam = friend('a', T1, { name: 'Nam' })
+  const huy = friend('a', T1, { name: 'Huy' })
+  // Raw JSON would compare '{"name":"Huy"…' > '{"id":"a"…' and wrongly pick Huy.
+  const huyNameFirst: Friend = { name: huy.name, id: huy.id, archived: huy.archived, createdAt: huy.createdAt, updatedAt: huy.updatedAt, deletedAt: huy.deletedAt }
+  // Raw JSON would compare '{"archived"…' < '{"id"…' and wrongly drop Nam.
+  const namArchivedFirst: Friend = { archived: nam.archived, id: nam.id, name: nam.name, createdAt: nam.createdAt, updatedAt: nam.updatedAt, deletedAt: nam.deletedAt }
+  expect(mergeRecords([huyNameFirst], [nam])[0].name).toBe('Nam')
+  expect(mergeRecords([namArchivedFirst], [huy])[0].name).toBe('Nam')
+})

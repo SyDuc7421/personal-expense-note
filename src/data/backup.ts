@@ -3,7 +3,7 @@ import { SCHEMA_VERSION, SNAPSHOT_FORMAT, snapshotSchema, type Snapshot } from '
 import type { ExpenseNoteDB } from './db'
 import type { BackupService, MetaRepository } from './repositories/types'
 
-async function deviceId(meta: MetaRepository): Promise<string> {
+export async function deviceId(meta: MetaRepository): Promise<string> {
   const existing = await meta.get('deviceId')
   if (existing) return existing
   const id = crypto.randomUUID()

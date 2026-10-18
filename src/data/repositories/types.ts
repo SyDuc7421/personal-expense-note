@@ -57,10 +57,30 @@ export interface BackupService {
   clearAll(): Promise<void>
 }
 
+export type SyncError = 'unauthorized' | 'conflict' | 'newerSchema' | 'invalidRemote' | 'failed'
+
+export type SyncStatus = { phase: 'disabled' | 'idle' | 'syncing' | 'offline' } | { phase: 'error'; error: SyncError }
+
+export interface SyncService {
+  /** Resolves when done; never throws. Concurrent calls join the running sync and schedule one rerun. */
+  sync(): Promise<void>
+  getStatus(): SyncStatus
+  /** For useSyncExternalStore. */
+  subscribe(listener: () => void): () => void
+  /** Generates a new code (a new store on the server), saves it and syncs. */
+  createSecret(): Promise<string>
+  /** Throws DomainError syncCodeNotFound (saving nothing) when the server has no data for the code; else saves it and syncs. */
+  joinWithSecret(secret: string): Promise<void>
+  disable(): Promise<void>
+  /** Any synced record changed since the last upload. Works inside a live query. */
+  hasPendingChanges(): Promise<boolean>
+}
+
 export interface Repositories {
   transactions: TransactionRepository
   friends: FriendRepository
   ledger: LedgerRepository
   meta: MetaRepository
   backup: BackupService
+  sync: SyncService
 }

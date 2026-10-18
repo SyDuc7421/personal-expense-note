@@ -11,6 +11,7 @@ export type DomainErrorCode =
   | 'invalidBackup'
   | 'newerSchema'
   | 'invalidDebtSelection'
+  | 'syncCodeNotFound'
 
 /** Error with a stable code; the UI translates `code` via i18n `errors.<code>`. */
 export class DomainError extends Error {

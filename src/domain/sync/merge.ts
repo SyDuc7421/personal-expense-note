@@ -10,11 +10,16 @@ export const EMPTY_SNAPSHOT_DATA: SnapshotData = { friends: [], transactions: []
 export const TOMBSTONE_TTL_DAYS = 180
 const DAY_MS = 86_400_000
 
+/** JSON with sorted top-level keys, so equal records compare equal whatever order their keys were built in. */
+export function canonicalJson(record: object): string {
+  return JSON.stringify(record, Object.keys(record).sort())
+}
+
 /** Spec 9.3: last-write-wins; tie → deleted wins; tie → larger JSON string, so every device picks the same record. */
 function pick<T extends Syncable>(a: T, b: T): T {
   if (a.updatedAt !== b.updatedAt) return a.updatedAt > b.updatedAt ? a : b
   if ((a.deletedAt === null) !== (b.deletedAt === null)) return a.deletedAt !== null ? a : b
-  return JSON.stringify(a) >= JSON.stringify(b) ? a : b
+  return canonicalJson(a) >= canonicalJson(b) ? a : b
 }
 
 /** Union by id, sorted by id. Commutative and idempotent. */

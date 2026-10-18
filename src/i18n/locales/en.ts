@@ -42,6 +42,7 @@ export const en = {
     newerSchema: 'This backup was made by a newer app version. Please update the app.',
     invalidDebtSelection: 'The selected items are no longer valid.',
     splitFriendRequired: 'Choose a friend for every split.',
+    syncCodeNotFound: 'This sync code does not exist. Check the code.',
   },
   parse: {
     empty: 'Type something like “cafe 35k”',

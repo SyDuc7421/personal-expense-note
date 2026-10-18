@@ -44,6 +44,7 @@ export const vi: Resources = {
     newerSchema: 'Bản backup từ phiên bản app mới hơn. Hãy cập nhật app.',
     invalidDebtSelection: 'Khoản đã chọn không còn hợp lệ.',
     splitFriendRequired: 'Chọn bạn cho mọi dòng chia tiền.',
+    syncCodeNotFound: 'Mã không tồn tại. Kiểm tra lại mã.',
   },
   parse: {
     empty: 'Gõ kiểu “cafe 35k”',
