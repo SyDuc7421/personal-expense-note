@@ -7,6 +7,7 @@ export type DomainErrorCode =
   | 'emptyName'
   | 'duplicateName'
   | 'nonZeroBalance'
+  | 'friendHasHistory'
   | 'invalidBackup'
   | 'newerSchema'
 

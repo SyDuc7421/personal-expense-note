@@ -21,7 +21,7 @@ export interface FriendRepository {
   create(name: string): Promise<string>
   rename(id: string, name: string): Promise<void>
   setArchived(id: string, archived: boolean): Promise<void>
-  /** Only allowed when the friend's balance is 0. */
+  /** Only allowed when the friend has no debts or settlements at all; otherwise archive. */
   remove(id: string): Promise<void>
 }
 

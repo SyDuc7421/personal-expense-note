@@ -38,6 +38,7 @@ export const vi: Resources = {
     emptyName: 'Tên không được để trống.',
     duplicateName: 'Đã có bạn trùng tên.',
     nonZeroBalance: 'Không xóa được bạn còn nợ. Hãy lưu trữ (archive).',
+    friendHasHistory: 'Bạn này đã có lịch sử giao dịch. Hãy lưu trữ thay vì xóa.',
     invalidBackup: 'File không phải bản backup Ghi Sổ hợp lệ.',
     newerSchema: 'Bản backup từ phiên bản app mới hơn. Hãy cập nhật app.',
     splitFriendRequired: 'Chọn bạn cho mọi dòng chia tiền.',

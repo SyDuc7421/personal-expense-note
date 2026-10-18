@@ -83,3 +83,14 @@ test('delete asks for confirmation then removes', async () => {
   expect(onDone).toHaveBeenCalled()
   expect(await repos.transactions.get(id)).toBeUndefined()
 })
+
+test('editing keeps an archived split friend selectable', async () => {
+  const { repos, nam } = await setup()
+  const id = await repos.transactions.create({
+    type: 'expense', amount: 100000, category: 'anuong', note: 'bún', date: '2026-10-12', splits: [{ friendId: nam, amount: 50000 }],
+  })
+  await repos.friends.setArchived(nam, true)
+  const { result } = renderViewModel(() => useTransactionFormViewModel({ id, onDone: () => {} }), repos)
+  await waitFor(() => expect(result.current.state.values.splits).toHaveLength(1))
+  await waitFor(() => expect(result.current.state.friends.map((f) => f.name)).toEqual(['Huy', 'Nam']))
+})

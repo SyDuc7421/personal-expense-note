@@ -87,8 +87,10 @@ export function useSettingsViewModel(): SettingsViewModel {
   }
 
   const rows = friends.all.map((f): FriendRow => {
-    const balance = balances.byFriend.get(f.id)?.balance ?? 0
-    return { id: f.id, name: f.name, archived: f.archived, balanceLabel: formatVND(balance), canDelete: balance === 0 }
+    const ledger = balances.byFriend.get(f.id)
+    const balance = ledger?.balance ?? 0
+    const hasHistory = Boolean(ledger && (ledger.entries.length > 0 || ledger.settlements.length > 0))
+    return { id: f.id, name: f.name, archived: f.archived, balanceLabel: formatVND(balance), canDelete: !hasHistory }
   })
 
   return {

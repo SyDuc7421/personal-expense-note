@@ -65,6 +65,8 @@ export function createFriendRepository(db: GhiSoDB): FriendRepository {
         const liveDebts = debts.filter((_, i) => isAlive(txs[i]))
         const settlements = await db.settlements.where('friendId').equals(id).filter(isAlive).toArray()
         if (friendBalance(liveDebts, settlements) !== 0) throw new DomainError('nonZeroBalance')
+        // Deleting a friend that debts/settlements still point at would orphan them (nameless rows, phantom balances).
+        if (debts.length > 0 || settlements.length > 0) throw new DomainError('friendHasHistory')
         await db.friends.put({ ...friend, ...tombstone(friend) })
       })
     },

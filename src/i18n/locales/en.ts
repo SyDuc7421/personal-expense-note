@@ -36,6 +36,7 @@ export const en = {
     emptyName: 'Name cannot be empty.',
     duplicateName: 'A friend with this name already exists.',
     nonZeroBalance: 'Cannot delete a friend with an open balance. Archive instead.',
+    friendHasHistory: 'This friend has transaction history. Archive instead of deleting.',
     invalidBackup: 'This file is not a valid Ghi Sổ backup.',
     newerSchema: 'This backup was made by a newer app version. Please update the app.',
     splitFriendRequired: 'Choose a friend for every split.',

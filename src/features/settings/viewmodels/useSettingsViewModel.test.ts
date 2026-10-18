@@ -41,6 +41,13 @@ test('adding a duplicate friend sets an error; adding a new one clears the input
   expect((await repos.friends.list()).map((f) => f.name)).toContain('Linh')
 })
 
+test('a settled friend with history cannot be deleted (archive only)', async () => {
+  const { view, repos, nam } = await setup()
+  await repos.ledger.addSettlement({ friendId: nam, amount: 50000, date: '2026-10-13', note: '' })
+  await waitFor(() => expect(view.result.current.state.friends.find((f) => f.id === nam)?.balanceLabel).toBe(formatVND(0)))
+  expect(view.result.current.state.friends.find((f) => f.id === nam)?.canDelete).toBe(false)
+})
+
 test('rename and archive', async () => {
   const { view, repos, nam } = await setup()
   const vm = () => view.result.current

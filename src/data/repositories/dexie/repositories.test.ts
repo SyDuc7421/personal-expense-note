@@ -108,9 +108,17 @@ describe('friends', () => {
     const { repos, nam } = await setup()
     await repos.transactions.create(lau([{ friendId: nam, amount: 150000 }]))
     expect(await codeOf(repos.friends.remove(nam))).toBe('nonZeroBalance')
+  })
+
+  test('cannot remove a settled friend that still has history (would orphan debts/settlements)', async () => {
+    const { repos, nam } = await setup()
+    const txId = await repos.transactions.create(lau([{ friendId: nam, amount: 150000 }]))
     await repos.ledger.addSettlement({ friendId: nam, amount: 150000, date: '2026-10-13', note: '' })
-    await repos.friends.remove(nam)
-    expect(await repos.friends.get(nam)).toBeUndefined()
+    expect(await codeOf(repos.friends.remove(nam))).toBe('friendHasHistory')
+    // Deleting the transaction leaves the settlement: still history, still not removable.
+    await repos.transactions.remove(txId)
+    expect(await codeOf(repos.friends.remove(nam))).toBe('nonZeroBalance')
+    expect(await repos.friends.get(nam)).toBeDefined()
   })
 
   test('deleted friend name can be reused', async () => {

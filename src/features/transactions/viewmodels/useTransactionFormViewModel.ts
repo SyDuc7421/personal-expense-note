@@ -149,7 +149,10 @@ export function useTransactionFormViewModel({ id, onDone }: { id?: string; onDon
       myShareLabel: formatVND(myShare),
       isSaving,
       confirmingDelete,
-      friends: friends.options,
+      // Keep friends already on this transaction selectable even if archived since.
+      friends: friends.all
+        .filter((f) => !f.archived || values.splits.some((s) => s.friendId === f.id))
+        .map((f) => ({ id: f.id, name: f.name })),
       categories: CATEGORIES.map((c) => ({ id: c.id, icon: c.icon })),
     },
     actions: {
