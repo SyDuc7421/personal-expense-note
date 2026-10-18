@@ -115,6 +115,14 @@
     --shadow-lg: 2px 2px 0px 0.5px hsl(216 64.5161% 24.3137% / 1.00), 2px 4px 6px -0.5px hsl(216 64.5161% 24.3137% / 1.00);
     --shadow-xl: 2px 2px 0px 0.5px hsl(216 64.5161% 24.3137% / 1.00), 2px 8px 10px -0.5px hsl(216 64.5161% 24.3137% / 1.00);
     --shadow-2xl: 2px 2px 0px 0.5px hsl(216 64.5161% 24.3137% / 2.50);
+    --series-1: #2a78d6;
+    --series-2: #eb6834;
+    --series-3: #1baf7a;
+    --series-4: #eda100;
+    --series-5: #e87ba4;
+    --series-6: #008300;
+    --series-7: #6250d6;
+    --series-other: #8a96a3;
     --tracking-normal: 0em;
     --font-sans: 'Barlow Semi Condensed', ui-sans-serif, sans-serif, system-ui;
     --font-mono: "Fira Code", ui-monospace, monospace;
@@ -122,6 +130,14 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
+    --series-1: #3987e5;
+    --series-2: #d95926;
+    --series-3: #199e70;
+    --series-4: #c98500;
+    --series-5: #d55181;
+    --series-6: #008300;
+    --series-7: #9085e9;
+    --series-other: #8a96a3;
     --background: oklch(0.3373 0.0925 258.5200);
     --foreground: oklch(0.9659 0.0065 208.7829);
     --card: oklch(0.2714 0.0737 257.9078);

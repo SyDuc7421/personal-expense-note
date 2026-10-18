@@ -4,7 +4,9 @@ import { EmptyState } from '@/components/EmptyState'
 import { ErrorState } from '@/components/ErrorState'
 import { ListSkeleton } from '@/components/ListSkeleton'
 import { useOverviewViewModel } from '../viewmodels/useOverviewViewModel'
+import { CategoryDonut } from './CategoryDonut'
 import { RecentTransactions } from './RecentTransactions'
+import { SummaryCards } from './SummaryCards'
 
 /** `quickInput` is injected by the app router so this view does not import another feature's views. */
 export function OverviewScreen({ quickInput }: { quickInput?: ReactNode }) {
@@ -22,7 +24,11 @@ export function OverviewScreen({ quickInput }: { quickInput?: ReactNode }) {
       ) : state.isEmpty ? (
         <EmptyState title={t('overview.empty')} />
       ) : (
-        <RecentTransactions vm={vm} />
+        <>
+          <SummaryCards vm={vm} />
+          <CategoryDonut slices={state.donut} />
+          <RecentTransactions vm={vm} />
+        </>
       )}
     </div>
   )

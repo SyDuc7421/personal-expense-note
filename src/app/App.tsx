@@ -10,7 +10,7 @@ export function App({ repositories }: { repositories: Repositories }) {
   return (
     <RepositoryProvider value={repositories}>
       <RouterProvider router={router} />
-      <Toaster position="top-center" offset={{ top: 'calc(env(safe-area-inset-top) + 8px)' }} />
+      <Toaster position="top-center" visibleToasts={1} duration={2000} offset={{ top: 'calc(env(safe-area-inset-top) + 8px)' }} />
     </RepositoryProvider>
   )
 }

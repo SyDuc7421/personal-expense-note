@@ -72,6 +72,7 @@ export function useQuickInputViewModel(opts: { today?: Date } = {}): QuickInputV
 
   async function save() {
     if (!result?.ok || isSaving) return
+    const submitted = text
     setIsSaving(true)
     try {
       const splits = []
@@ -85,10 +86,11 @@ export function useQuickInputViewModel(opts: { today?: Date } = {}): QuickInputV
         category: result.category,
         note: result.note,
         date: result.date,
-        rawInput: text.trim(),
+        rawInput: submitted.trim(),
         splits,
       })
-      setText('')
+      // Keep anything typed while saving.
+      setText((current) => (current === submitted ? '' : current))
       setSaveError(null)
       toast.success(t('overview.saved'))
     } catch (e) {

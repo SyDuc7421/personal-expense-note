@@ -49,3 +49,18 @@ test('save creates missing friends and the transaction, then clears input', asyn
   expect(entries.map((e) => e.amount)).toEqual([150000, 150000, 150000])
   expect((await repos.friends.list()).map((f) => f.name).sort()).toEqual(['Huy', 'Linh', 'Nam'])
 })
+
+test('text typed while a save is in flight is kept', async () => {
+  const { repos } = createTestRepositories()
+  const { result } = renderViewModel(() => useQuickInputViewModel({ today }), repos)
+  await waitFor(() => expect(result.current.state.isReady).toBe(true))
+  act(() => result.current.actions.setText('cafe 35k'))
+  let pending!: Promise<void>
+  act(() => {
+    pending = result.current.actions.save()
+  })
+  act(() => result.current.actions.setText('grab 50k'))
+  await act(() => pending)
+  expect(result.current.state.text).toBe('grab 50k')
+  expect(await repos.transactions.count()).toBe(1)
+})
