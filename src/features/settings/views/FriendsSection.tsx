@@ -1,8 +1,9 @@
-import { Archive, ArchiveRestore, Check, Pencil, Trash2, X } from 'lucide-react'
+import { Archive, ArchiveRestore, Check, ChevronDown, Pencil, Trash2, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Amount } from '@/components/Amount'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { cn } from '@/lib/utils'
 import type { SettingsViewModel } from '../viewmodels/useSettingsViewModel'
 import { Section } from './Section'
 
@@ -36,7 +37,19 @@ export function FriendsSection({ vm }: { vm: SettingsViewModel }) {
       {state.friends.length === 0 ? (
         <p className="py-2 text-sm text-muted-foreground">{t('settings.noFriends')}</p>
       ) : (
-        <ul className="divide-y">
+        <Button
+          variant="ghost"
+          className="justify-between px-0"
+          aria-expanded={state.friendsExpanded}
+          aria-controls="friend-list"
+          onClick={actions.toggleFriendsList}
+        >
+          {t(state.friendsExpanded ? 'settings.hideFriends' : 'settings.showFriends', { count: state.friends.length })}
+          <ChevronDown className={cn('transition-transform', state.friendsExpanded && 'rotate-180')} />
+        </Button>
+      )}
+      {state.friendsExpanded && state.friends.length > 0 && (
+        <ul id="friend-list" className="divide-y">
           {state.friends.map((f) =>
             state.editing?.id === f.id ? (
               <li key={f.id} className="flex items-center gap-1 py-1">

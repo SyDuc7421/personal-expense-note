@@ -150,6 +150,8 @@ export const vi: Resources = {
   settings: {
     title: 'Cài đặt',
     friends: 'Bạn bè',
+    showFriends: 'Hiện danh sách ({{count}})',
+    hideFriends: 'Ẩn danh sách ({{count}})',
     addFriend: 'Thêm bạn',
     friendName: 'Tên bạn',
     rename: 'Đổi tên',

@@ -50,6 +50,16 @@ test('a settled friend with history cannot be deleted (archive only)', async () 
   expect(view.result.current.state.friends.find((f) => f.id === nam)?.canDelete).toBe(false)
 })
 
+test('friend list starts hidden and toggles', async () => {
+  const { view } = await setup()
+  const vm = () => view.result.current
+  expect(vm().state.friendsExpanded).toBe(false)
+  act(() => vm().actions.toggleFriendsList())
+  expect(vm().state.friendsExpanded).toBe(true)
+  act(() => vm().actions.toggleFriendsList())
+  expect(vm().state.friendsExpanded).toBe(false)
+})
+
 test('rename and archive', async () => {
   const { view, repos, nam } = await setup()
   const vm = () => view.result.current

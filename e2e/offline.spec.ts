@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test'
+import { showFriendList } from './helpers/app'
 
 test('app loads offline after the service worker is active', async ({ page, context }) => {
   await page.goto('/')
@@ -14,5 +15,6 @@ test('app loads offline after the service worker is active', async ({ page, cont
   await page.getByRole('link', { name: 'Cài đặt' }).click()
   await page.getByLabel('Tên bạn').fill('Offline')
   await page.getByRole('button', { name: 'Thêm bạn' }).click()
+  await showFriendList(page)
   await expect(page.getByText('Offline', { exact: true })).toBeVisible()
 })

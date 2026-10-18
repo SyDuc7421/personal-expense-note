@@ -45,6 +45,8 @@ export interface SettingsViewModel {
     friends: FriendRow[]
     newFriendName: string
     editing: { id: string; name: string } | null
+    /** The friend list is hidden by default so Settings doesn't open on a long list. */
+    friendsExpanded: boolean
     /** i18n key */
     error: string | null
     confirm: SettingsConfirm
@@ -58,6 +60,7 @@ export interface SettingsViewModel {
   }
   actions: {
     setNewFriendName(name: string): void
+    toggleFriendsList(): void
     addFriend(): Promise<void>
     startEdit(id: string): void
     setEditName(name: string): void
@@ -93,6 +96,7 @@ export function useSettingsViewModel(): SettingsViewModel {
   const lastExport = useRepoQuery(() => repos.meta.get(LAST_EXPORT_KEY), [repos.meta])
   const [newFriendName, setNewFriendName] = useState('')
   const [editing, setEditing] = useState<{ id: string; name: string } | null>(null)
+  const [friendsExpanded, setFriendsExpanded] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [confirm, setConfirm] = useState<SettingsConfirm>(null)
   const [pendingImport, setPendingImport] = useState<unknown>(null)
@@ -153,6 +157,7 @@ export function useSettingsViewModel(): SettingsViewModel {
       friends: rows,
       newFriendName,
       editing,
+      friendsExpanded,
       error,
       confirm,
       lastExportLabel: lastExport.data ? format(parseISO(lastExport.data), 'dd/MM/yyyy HH:mm') : null,
@@ -172,6 +177,7 @@ export function useSettingsViewModel(): SettingsViewModel {
     },
     actions: {
       setNewFriendName,
+      toggleFriendsList: () => setFriendsExpanded((v) => !v),
       async addFriend() {
         if (await attempt(() => repos.friends.create(newFriendName))) setNewFriendName('')
       },

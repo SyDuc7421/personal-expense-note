@@ -148,6 +148,8 @@ export const en = {
   settings: {
     title: 'Settings',
     friends: 'Friends',
+    showFriends: 'Show list ({{count}})',
+    hideFriends: 'Hide list ({{count}})',
     addFriend: 'Add friend',
     friendName: 'Friend name',
     rename: 'Rename',

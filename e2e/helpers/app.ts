@@ -1,10 +1,17 @@
 import { expect, type Page } from '@playwright/test'
 
+/** The Settings friend list is hidden by default; opens it if it is closed. */
+export async function showFriendList(page: Page) {
+  const toggle = page.getByRole('button', { name: /^(Hiện|Ẩn) danh sách/ })
+  if ((await toggle.getAttribute('aria-expanded')) === 'false') await toggle.click()
+}
+
 export async function addFriends(page: Page, names: string[]) {
   await page.goto('/settings')
   for (const name of names) {
     await page.getByLabel('Tên bạn').fill(name)
     await page.getByRole('button', { name: 'Thêm bạn' }).click()
+    await showFriendList(page)
     await expect(page.getByText(name, { exact: true })).toBeVisible()
   }
 }
