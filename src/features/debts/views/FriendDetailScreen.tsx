@@ -1,11 +1,13 @@
-import { ChevronLeft, Send } from 'lucide-react'
+import { Check, ChevronLeft, Send } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useParams } from 'react-router'
 import { Amount } from '@/components/Amount'
 import { EmptyState } from '@/components/EmptyState'
 import { ErrorState } from '@/components/ErrorState'
 import { ListSkeleton } from '@/components/ListSkeleton'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 import { useFriendDetailViewModel } from '../viewmodels/useFriendDetailViewModel'
 import { SettleDrawer } from './SettleDrawer'
 
@@ -22,6 +24,7 @@ function FriendDetail({ friendId }: { friendId: string }) {
   if (state.isLoading) return <ListSkeleton />
   if (state.error) return <ErrorState message={t('common.loadError')} />
   if (state.notFound) return <EmptyState title={t('debts.notFound')} />
+  const count = state.selection.ids.length
 
   return (
     <div className="pb-20">
@@ -42,25 +45,82 @@ function FriendDetail({ friendId }: { friendId: string }) {
         />
       </div>
 
-      <h3 className="px-4 pb-1 text-sm font-semibold text-muted-foreground uppercase">{t('debts.timeline')}</h3>
+      <div className="flex min-h-11 items-center justify-between pr-2 pl-4">
+        <h3 className="text-sm font-semibold text-muted-foreground uppercase">{t('debts.timeline')}</h3>
+        {(state.canSelect || state.selection.active) && (
+          <Button variant="ghost" size="sm" onClick={actions.toggleSelectMode}>
+            {state.selection.active ? t('debts.done') : t('debts.select')}
+          </Button>
+        )}
+      </div>
       <ul className="divide-y border-y">
-        {state.timeline.map((e) => (
-          <li key={e.id} className="flex min-h-12 items-center gap-3 px-4 py-2">
-            <span className="w-12 shrink-0 text-sm text-muted-foreground tabular-nums">{e.dateLabel}</span>
-            <span className="min-w-0 flex-1 truncate">{e.kind === 'debt' ? e.note : e.note || t('debts.settlementItem')}</span>
-            <Amount label={e.kind === 'debt' ? e.amountLabel : `−${e.amountLabel}`} tone={e.kind === 'settlement' ? 'positive' : undefined} />
-          </li>
-        ))}
+        {state.timeline.map((e) => {
+          const checkable = state.selection.active && e.selectable
+          const checked = checkable && state.selection.ids.includes(e.id)
+          return (
+            <li
+              key={e.id}
+              className={cn('relative flex min-h-12 items-center gap-3 px-4 py-2', e.status === 'paid' && 'text-muted-foreground', checked && 'bg-primary/10')}
+            >
+              {state.selection.active && !checkable && <span className="w-5 shrink-0" />}
+              {checkable && (
+                <button
+                  type="button"
+                  role="checkbox"
+                  aria-checked={checked}
+                  aria-label={t('debts.selectItem', { note: e.note || e.dateLabel })}
+                  onClick={() => actions.toggleSelected(e.id)}
+                  className="-mx-3 flex size-11 shrink-0 items-center justify-center after:absolute after:inset-0"
+                >
+                  <span
+                    className={cn(
+                      'flex size-5 items-center justify-center rounded border-2 border-primary',
+                      checked && 'bg-primary text-primary-foreground',
+                    )}
+                  >
+                    {checked && <Check className="size-3.5" />}
+                  </span>
+                </button>
+              )}
+              <span className="w-12 shrink-0 text-sm text-muted-foreground tabular-nums">{e.dateLabel}</span>
+              <span className="flex min-w-0 flex-1 items-center gap-2">
+                <span className="truncate">{e.kind === 'debt' ? e.note : e.note || t('debts.settlementItem')}</span>
+                {e.status === 'paid' && <Badge variant="outline">{t('debts.paidBadge')}</Badge>}
+                {e.remainingLabel && (
+                  <span className="shrink-0 text-sm text-muted-foreground">{t('debts.remainingOf', { amount: e.remainingLabel })}</span>
+                )}
+              </span>
+              <Amount
+                label={e.kind === 'debt' ? e.amountLabel : `−${e.amountLabel}`}
+                tone={e.kind === 'settlement' ? 'positive' : undefined}
+                className={cn(e.status === 'paid' && 'line-through')}
+              />
+            </li>
+          )
+        })}
       </ul>
 
       <div className="fixed inset-x-0 bottom-[calc(3.5rem+env(safe-area-inset-bottom))] z-30 border-t bg-background/95 backdrop-blur">
         <div className="mx-auto flex max-w-md gap-2 p-3">
-          <Button variant="outline" className="flex-1" onClick={() => void actions.remind()} disabled={state.outstanding.length === 0}>
-            <Send /> {t('debts.remind')}
-          </Button>
-          <Button className="flex-1" onClick={actions.openSettle} disabled={state.balance <= 0}>
-            {t('debts.settle')}
-          </Button>
+          {state.selection.active ? (
+            <>
+              <Button variant="outline" className="flex-1" onClick={() => void actions.remindSelected()} disabled={count === 0}>
+                <Send /> {count ? t('debts.remindCount', { count }) : t('debts.remind')}
+              </Button>
+              <Button className="flex-1" onClick={() => void actions.markSelectedPaid()} disabled={count === 0}>
+                {count ? t('debts.markPaidCount', { count }) : t('debts.settle')}
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button variant="outline" className="flex-1" onClick={() => void actions.remind()} disabled={state.outstanding.length === 0}>
+                <Send /> {t('debts.remind')}
+              </Button>
+              <Button className="flex-1" onClick={actions.openSettle} disabled={state.balance <= 0}>
+                {t('debts.settle')}
+              </Button>
+            </>
+          )}
         </div>
       </div>
       <SettleDrawer vm={vm} />

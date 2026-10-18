@@ -55,3 +55,29 @@ test('switching language to English changes the UI', async ({ page }) => {
   await page.reload()
   await expect(page.getByRole('link', { name: 'Overview' })).toBeVisible()
 })
+
+test('select one debt, mark it paid, undo', async ({ page }) => {
+  await page.goto('/')
+  for (const input of ['cafe 32k /2 @Nam', 'taxi 70k /2 @Nam']) {
+    await page.getByLabel('Nhập nhanh').fill(input)
+    await page.getByLabel('Nhập nhanh').press('Enter')
+    await expect(page.getByLabel('Nhập nhanh')).toHaveValue('')
+  }
+  await page.goto('/debts')
+  await page.getByRole('button', { name: /^Nam/ }).click()
+  await expect(page.getByText('51.000 ₫').first()).toBeVisible()
+
+  await page.getByRole('button', { name: 'Chọn', exact: true }).click()
+  await page.getByRole('checkbox', { name: 'Chọn cafe' }).click()
+  await expectTouchTargets(page)
+  await page.getByRole('button', { name: 'Đã trả (1)' }).click()
+
+  await expect(page.getByText('Đã đánh dấu 1 khoản đã trả')).toBeVisible()
+  await expect(page.getByText('35.000 ₫').first()).toBeVisible()
+  await expect(page.getByText('Trả: cafe')).toBeVisible()
+  await expect(page.getByText('đã trả', { exact: true })).toBeVisible()
+
+  await page.getByRole('button', { name: 'Hoàn tác' }).click()
+  await expect(page.getByText('51.000 ₫').first()).toBeVisible()
+  await expect(page.getByText('Trả: cafe')).toHaveCount(0)
+})
