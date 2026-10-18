@@ -1,7 +1,11 @@
+import { act } from '@testing-library/react'
+import { downloadJson } from '@/lib/download'
 import { createTestRepositories } from '@/data/testing'
 import { formatVND } from '@/lib/format'
 import { renderViewModel, waitFor } from '@/test/renderViewModel'
 import { useOverviewViewModel } from './useOverviewViewModel'
+
+vi.mock('@/lib/download', () => ({ downloadJson: vi.fn() }))
 
 test('shows the 5 most recent transactions, newest first', async () => {
   const { repos } = createTestRepositories()
@@ -44,4 +48,17 @@ test('month spend uses myShare, compares with last month, sums what friends owe'
   // Nam overpaid (-50k) does not reduce what is "out there"
   expect(state.owedToMe).toBe(300000)
   expect(state.donut.map((d) => [d.category, d.value])).toEqual([['anuong', 150000], ['dichuyen', 50000]])
+})
+
+test('backup banner appears after 10 transactions and hides after export', async () => {
+  const { repos } = createTestRepositories()
+  for (let i = 0; i < 10; i++) {
+    await repos.transactions.create({ type: 'expense', amount: 1000, category: 'khac', note: `n${i}`, date: '2026-10-01', splits: [] })
+  }
+  const { result } = renderViewModel(() => useOverviewViewModel({ today: new Date(2026, 9, 18) }), repos)
+  await waitFor(() => expect(result.current.state.isLoading).toBe(false))
+  expect(result.current.state.showBackupBanner).toBe(true)
+  await act(() => result.current.actions.exportBackup())
+  expect(downloadJson).toHaveBeenCalled()
+  await waitFor(() => expect(result.current.state.showBackupBanner).toBe(false))
 })

@@ -1,12 +1,17 @@
 import { format, subMonths } from 'date-fns'
+import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router'
+import { toast } from 'sonner'
 import { useRepositories } from '@/data/RepositoryProvider'
+import { shouldShowBackupBanner } from '@/domain/backupReminder'
 import { getCategory } from '@/domain/categories'
 import { monthSpend, percentChange, spendByCategory, totalOwedToMe } from '@/domain/stats'
 import type { CategoryId } from '@/domain/types'
 import { formatVND } from '@/lib/format'
 import { toTransactionListItem, type TransactionListItem } from '@/features/shared/viewmodels/transactionItems'
+import { errorKey } from '@/features/shared/viewmodels/errors'
 import { useBalances } from '@/features/shared/viewmodels/useBalances'
+import { LAST_EXPORT_KEY, useExportBackup } from '@/features/shared/viewmodels/useExportBackup'
 import { useFriends } from '@/features/shared/viewmodels/useFriends'
 import { useRepoQuery } from '@/features/shared/viewmodels/useRepoQuery'
 
@@ -40,16 +45,20 @@ export interface OverviewViewModel {
     owedToMe: number
     owedToMeLabel: string
     donut: DonutSlice[]
+    showBackupBanner: boolean
   }
   actions: {
     openTransaction(id: string): void
     seeAll(): void
     goToDebts(): void
+    exportBackup(): Promise<void>
   }
 }
 
 export function useOverviewViewModel(opts: { today?: Date } = {}): OverviewViewModel {
-  const { transactions } = useRepositories()
+  const { t } = useTranslation()
+  const { transactions, meta } = useRepositories()
+  const exportBackup = useExportBackup()
   const navigate = useNavigate()
   const friends = useFriends()
   const balances = useBalances()
@@ -63,13 +72,22 @@ export function useOverviewViewModel(opts: { today?: Date } = {}): OverviewViewM
     [transactions, month, previousMonth],
   )
 
+  const backupInfo = useRepoQuery(
+    async () => ({
+      lastExportAt: await meta.get(LAST_EXPORT_KEY),
+      syncEnabled: Boolean(await meta.get('syncSecret')),
+      transactionCount: await transactions.count(),
+    }),
+    [meta, transactions],
+  )
+
   const items = (recent.data ?? []).map((tx) => toTransactionListItem(tx, friends.names))
   const spend = monthSpend(months.data?.current ?? [])
   const owed = totalOwedToMe([...balances.byFriend.values()].map((l) => l.balance))
 
   return {
     state: {
-      isLoading: recent.isLoading || months.isLoading || friends.isLoading || balances.isLoading,
+      isLoading: recent.isLoading || months.isLoading || friends.isLoading || balances.isLoading || backupInfo.isLoading,
       error: recent.error ?? months.error ?? balances.error,
       isEmpty: items.length === 0,
       recent: items,
@@ -85,11 +103,19 @@ export function useOverviewViewModel(opts: { today?: Date } = {}): OverviewViewM
         valueLabel: formatVND(s.total),
         color: seriesColor(s.category),
       })),
+      showBackupBanner: backupInfo.data ? shouldShowBackupBanner({ ...backupInfo.data, now: today }) : false,
     },
     actions: {
       openTransaction: (id) => navigate(`/transactions?edit=${encodeURIComponent(id)}`),
       seeAll: () => navigate('/transactions'),
       goToDebts: () => navigate('/debts'),
+      async exportBackup() {
+        try {
+          await exportBackup()
+        } catch (e) {
+          toast.error(t(errorKey(e)))
+        }
+      },
     },
   }
 }

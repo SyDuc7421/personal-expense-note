@@ -6,10 +6,10 @@ import { useRepositories } from '@/data/RepositoryProvider'
 import { DomainError } from '@/domain/errors'
 import type { Language } from '@/domain/types'
 import { changeLanguage, LANGUAGES } from '@/i18n'
-import { downloadJson } from '@/lib/download'
-import { formatVND, todayISO } from '@/lib/format'
+import { formatVND } from '@/lib/format'
 import { errorKey } from '@/features/shared/viewmodels/errors'
 import { useBalances } from '@/features/shared/viewmodels/useBalances'
+import { LAST_EXPORT_KEY, useExportBackup } from '@/features/shared/viewmodels/useExportBackup'
 import { useFriends } from '@/features/shared/viewmodels/useFriends'
 import { REMINDER_TEMPLATE_KEY, useReminderTemplate } from '@/features/shared/viewmodels/useReminderTemplate'
 import { useRepoQuery } from '@/features/shared/viewmodels/useRepoQuery'
@@ -64,7 +64,8 @@ export function useSettingsViewModel(): SettingsViewModel {
   const repos = useRepositories()
   const friends = useFriends()
   const balances = useBalances()
-  const lastExport = useRepoQuery(() => repos.meta.get('lastExportAt'), [repos.meta])
+  const exportBackup = useExportBackup()
+  const lastExport = useRepoQuery(() => repos.meta.get(LAST_EXPORT_KEY), [repos.meta])
   const [newFriendName, setNewFriendName] = useState('')
   const [editing, setEditing] = useState<{ id: string; name: string } | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -126,12 +127,7 @@ export function useSettingsViewModel(): SettingsViewModel {
         await attempt(() => repos.friends.remove(id))
       },
       async exportJson() {
-        const ok = await attempt(async () => {
-          const snapshot = await repos.backup.exportSnapshot()
-          downloadJson(`ghi-so-backup-${todayISO()}.json`, snapshot)
-          await repos.meta.set('lastExportAt', new Date().toISOString())
-        })
-        if (ok) toast.success(t('settings.exported'))
+        await attempt(exportBackup)
       },
       async importJson(file) {
         await attempt(async () => {

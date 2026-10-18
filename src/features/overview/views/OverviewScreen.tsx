@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Banner } from '@/components/Banner'
 import { EmptyState } from '@/components/EmptyState'
 import { ErrorState } from '@/components/ErrorState'
 import { ListSkeleton } from '@/components/ListSkeleton'
@@ -17,6 +18,11 @@ export function OverviewScreen({ quickInput }: { quickInput?: ReactNode }) {
   return (
     <div className="flex flex-col gap-4 pb-4">
       {quickInput}
+      {state.showBackupBanner && (
+        <div className="px-4">
+          <Banner message={t('banners.backup')} actionLabel={t('banners.backupAction')} onAction={() => void vm.actions.exportBackup()} />
+        </div>
+      )}
       {state.isLoading ? (
         <ListSkeleton rows={3} />
       ) : state.error ? (
