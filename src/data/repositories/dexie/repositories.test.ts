@@ -162,6 +162,15 @@ describe('ledger', () => {
     expect(await repos.ledger.listSettlements()).toEqual([])
   })
 
+  test('debts of a deleted transaction are excluded even when the debt itself is live', async () => {
+    const { db, repos, nam } = await setup()
+    const id = await repos.transactions.create(lau([{ friendId: nam, amount: 150000 }]))
+    const tx = (await db.transactions.get(id))!
+    // Simulates a merge where the transaction tombstone arrived but the debt tombstone did not.
+    await db.transactions.put({ ...tx, deletedAt: '2026-10-13T00:00:00.000Z' })
+    expect(await repos.ledger.listDebtEntries()).toEqual([])
+  })
+
   test('targeted settlement stores debtIds', async () => {
     const { repos, nam } = await setup()
     await repos.transactions.create(lau([{ friendId: nam, amount: 150000 }]))

@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { Amount } from './Amount'
+import { Badge } from './ui/badge'
 
 export interface TransactionRowData {
   id: string
@@ -9,6 +10,7 @@ export interface TransactionRowData {
   type: 'expense' | 'income'
   amountLabel: string
   debtorNames: string[]
+  needsReview?: boolean
 }
 
 export function TransactionRow({ item, onClick }: { item: TransactionRowData; onClick?: () => void }) {
@@ -28,6 +30,11 @@ export function TransactionRow({ item, onClick }: { item: TransactionRowData; on
           <span className="truncate text-xs text-amber-700 dark:text-amber-400">
             {t('transactions.paidFor', { names: item.debtorNames.join(', ') })}
           </span>
+        )}
+        {item.needsReview && (
+          <Badge variant="destructive" className="mt-0.5">
+            {t('transactions.needsReview')}
+          </Badge>
         )}
       </span>
       <Amount label={item.amountLabel} tone={item.type === 'income' ? 'positive' : undefined} className="font-medium" />
