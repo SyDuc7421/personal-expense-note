@@ -64,3 +64,16 @@ test('opens the edit form from the ?edit= search param', async () => {
   const { result } = renderViewModel(() => useTransactionListViewModel({ initialMonth: '2026-10', initialEdit: 'abc' }), repos)
   expect(result.current.state.formTarget).toBe('abc')
 })
+
+test('labels today and yesterday groups', async () => {
+  const { repos } = createTestRepositories()
+  const now = new Date()
+  const iso = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+  const yesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1)
+  await repos.transactions.create({ type: 'expense', amount: 1000, category: 'khac', note: 'a', date: iso(now), splits: [] })
+  await repos.transactions.create({ type: 'expense', amount: 1000, category: 'khac', note: 'b', date: iso(yesterday), splits: [] })
+  const { result } = renderViewModel(() => useTransactionListViewModel({ initialMonth: iso(now).slice(0, 7) }), repos)
+  await waitFor(() => expect(result.current.state.groups.length).toBeGreaterThan(0))
+  expect(result.current.state.groups[0].label).toBe('Hôm nay')
+  if (yesterday.getMonth() === now.getMonth()) expect(result.current.state.groups[1].label).toBe('Hôm qua')
+})

@@ -1,5 +1,6 @@
 import { addMonths, format, isToday, isYesterday, parseISO } from 'date-fns'
 import { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useSearchParams } from 'react-router'
 import { useRepositories } from '@/data/RepositoryProvider'
 import { CATEGORIES } from '@/domain/categories'
@@ -59,6 +60,7 @@ export function useTransactionListViewModel(
 ): TransactionListViewModel {
   const { transactions } = useRepositories()
   const locale = useDateLocale()
+  const { t } = useTranslation()
   const [month, setMonth] = useState(opts.initialMonth ?? monthOf(todayISO()))
   const [filters, setFilters] = useState<TransactionFilters>({})
   const [params, setParams] = useSearchParams()
@@ -79,12 +81,12 @@ export function useTransactionListViewModel(
       const d = parseISO(date)
       return {
         date,
-        label: isToday(d) || isYesterday(d) ? format(d, 'EEEE', { locale }) : format(d, 'EEEE, dd/MM', { locale }),
+        label: isToday(d) ? t('common.today') : isYesterday(d) ? t('common.yesterday') : format(d, 'EEEE, dd/MM', { locale }),
         totalLabel: formatVND(dayTxs.reduce((acc, tx) => acc + expenseShare(tx), 0)),
         items: dayTxs.map((tx) => toTransactionListItem(tx, friends.names)),
       }
     })
-  }, [query.data, filters, friends.names, locale])
+  }, [query.data, filters, friends.names, locale, t])
 
   const shift = (delta: number) => setMonth((m) => format(addMonths(parseISO(`${m}-01`), delta), 'yyyy-MM'))
 
