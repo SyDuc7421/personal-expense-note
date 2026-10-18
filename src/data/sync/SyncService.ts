@@ -1,6 +1,7 @@
 import { DomainError } from '@/domain/errors'
 import { SCHEMA_VERSION, SNAPSHOT_FORMAT, type Snapshot } from '@/domain/snapshot'
 import { canonicalJson, EMPTY_SNAPSHOT_DATA, merge, purgeTombstones, SYNC_TABLES, type SnapshotData } from '@/domain/sync/merge'
+import { reassignFromMergedFriends } from '@/domain/sync/integrity'
 import { generateSyncSecret, isSyncSecret } from '@/domain/sync/secret'
 import type { Syncable } from '@/domain/types'
 import { deviceId, parseSnapshot } from '../backup'
@@ -64,7 +65,10 @@ export function createSyncService(
         debts: await db.debts.toArray(),
         settlements: await db.settlements.toArray(),
       }
-      const { data, purged } = purgeTombstones(merge(local, remote), new Date())
+      const now = new Date()
+      const purgedResult = purgeTombstones(merge(local, remote), now)
+      const data = reassignFromMergedFriends(purgedResult.data, now)
+      const { purged } = purgedResult
       for (const name of SYNC_TABLES) {
         const before = new Map((local[name] as Syncable[]).map((r) => [r.id, canonicalJson(r)]))
         const changed = (data[name] as Syncable[]).filter((r) => before.get(r.id) !== canonicalJson(r))

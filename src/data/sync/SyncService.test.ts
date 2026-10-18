@@ -246,3 +246,26 @@ test('subscribe notifies on status change', async () => {
   await a.repos.sync.sync()
   expect(seen).toEqual(['syncing', 'idle'])
 })
+
+test('a debt added on a merged duplicate by a device that had not synced yet moves to the kept friend', async () => {
+  const api = createMemorySyncApi()
+  const a = device(api)
+  const nam = await a.repos.friends.create('Nam')
+  const later = '2099-01-01T00:00:00.000Z'
+  const nam2 = crypto.randomUUID()
+  await a.db.friends.add({ id: nam2, name: 'nam', archived: false, createdAt: later, updatedAt: later, deletedAt: null })
+  const code = await a.repos.sync.createSecret()
+  const b = device(api)
+  await b.repos.sync.joinWithSecret(code)
+
+  await a.repos.friends.mergeDuplicates()
+  await a.repos.sync.sync()
+  await b.repos.transactions.create(expense('lẩu', [{ friendId: nam2, amount: 100000 }]))
+  await b.repos.sync.sync()
+  await a.repos.sync.sync()
+
+  for (const repos of [a.repos, b.repos]) {
+    expect(await balance(repos, nam)).toBe(100000)
+    expect(await repos.ledger.listDebtEntries(nam2)).toEqual([])
+  }
+})
