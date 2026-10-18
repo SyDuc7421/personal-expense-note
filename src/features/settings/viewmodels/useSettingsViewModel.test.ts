@@ -140,3 +140,68 @@ test('action errors are also toasted so they are visible anywhere on the page', 
   await act(() => view.result.current.actions.addFriend())
   expect(toast.error).toHaveBeenCalledWith('Đã có bạn trùng tên.')
 })
+
+describe('sync', () => {
+  async function syncSetup() {
+    const { createMemorySyncApi } = await import('@/data/sync/memoryApi')
+    const api = createMemorySyncApi()
+    const t = createTestRepositories({ syncApi: api, isOnline: () => true })
+    const view = renderViewModel(() => useSettingsViewModel(), t.repos)
+    await waitFor(() => expect(view.result.current.state.isLoading).toBe(false))
+    return { ...t, api, view }
+  }
+
+  test('starts disabled', async () => {
+    const { view } = await syncSetup()
+    expect(view.result.current.state.sync.enabled).toBe(false)
+    expect(view.result.current.state.sync.code).toBeNull()
+  })
+
+  test('createCode enables sync, syncs and shows the time of the last sync', async () => {
+    const { view } = await syncSetup()
+    await act(() => view.result.current.actions.createCode())
+    // The code is saved before the first upload finishes; lastSyncAt lands after it.
+    await waitFor(() => expect(view.result.current.state.sync.lastSyncLabel).not.toBeNull())
+    const sync = view.result.current.state.sync
+    expect(sync.code).toHaveLength(43)
+    expect(sync.codeVisible).toBe(false)
+    expect(sync.lastSyncLabel).toMatch(/^\d{2}:\d{2}$/)
+    expect(sync.statusLabel).toBe(i18n.t('settings.syncSynced', { time: sync.lastSyncLabel }))
+  })
+
+  test('joinWithCode with an unknown code shows syncCodeNotFound and stays disabled', async () => {
+    const { view } = await syncSetup()
+    act(() => view.result.current.actions.setJoinDraft('x'.repeat(43)))
+    await act(() => view.result.current.actions.joinWithCode())
+    expect(view.result.current.state.error).toBe('errors.syncCodeNotFound')
+    expect(view.result.current.state.sync.enabled).toBe(false)
+  })
+
+  test('joinWithCode with a code from another device enables sync and clears the draft', async () => {
+    const { api, view } = await syncSetup()
+    const other = createTestRepositories({ syncApi: api, isOnline: () => true })
+    const code = await other.repos.sync.createSecret()
+    act(() => view.result.current.actions.setJoinDraft(code))
+    await act(() => view.result.current.actions.joinWithCode())
+    await waitFor(() => expect(view.result.current.state.sync.code).toBe(code))
+    expect(view.result.current.state.sync.joinDraft).toBe('')
+  })
+
+  test('disable needs confirmation', async () => {
+    const { view } = await syncSetup()
+    await act(() => view.result.current.actions.createCode())
+    await waitFor(() => expect(view.result.current.state.sync.enabled).toBe(true))
+    act(() => view.result.current.actions.askDisableSync())
+    expect(view.result.current.state.confirm).toBe('disableSync')
+    await act(() => view.result.current.actions.confirm())
+    await waitFor(() => expect(view.result.current.state.sync.enabled).toBe(false))
+  })
+
+  test('toggleCodeVisible reveals the code', async () => {
+    const { view } = await syncSetup()
+    await act(() => view.result.current.actions.createCode())
+    await waitFor(() => expect(view.result.current.state.sync.enabled).toBe(true))
+    act(() => view.result.current.actions.toggleCodeVisible())
+    expect(view.result.current.state.sync.codeVisible).toBe(true)
+  })
+})
