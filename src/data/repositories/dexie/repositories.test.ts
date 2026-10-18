@@ -143,6 +143,50 @@ describe('friends', () => {
   })
 })
 
+describe('mergeDuplicates', () => {
+  async function twoNams() {
+    const { db, repos, nam, huy } = await setup()
+    // Another device created its own "Nam" offline; it arrived through sync.
+    const nam2 = crypto.randomUUID()
+    const later = '2099-01-01T00:00:00.000Z'
+    await db.friends.add({ id: nam2, name: 'nam', archived: false, createdAt: later, updatedAt: later, deletedAt: null })
+    return { db, repos, nam, nam2, huy }
+  }
+
+  test('moves debts and settlements to the older friend and removes the newer one', async () => {
+    const { repos, nam, nam2 } = await twoNams()
+    await repos.transactions.create(lau([{ friendId: nam, amount: 100000 }]))
+    await repos.transactions.create(lau([{ friendId: nam2, amount: 200000 }]))
+    await repos.ledger.addSettlement({ friendId: nam2, amount: 50000, date: '2026-10-13', note: '' })
+
+    expect(await repos.friends.mergeDuplicates()).toBe(1)
+
+    expect((await repos.friends.list()).filter((f) => f.name.toLowerCase() === 'nam').map((f) => f.id)).toEqual([nam])
+    expect((await repos.ledger.listDebtEntries(nam)).map((d) => d.amount).sort()).toEqual([100000, 200000])
+    expect((await repos.ledger.listSettlements(nam)).map((s) => s.amount)).toEqual([50000])
+    expect(await repos.ledger.listDebtEntries(nam2)).toEqual([])
+  })
+
+  test('joins two debts on the same transaction into one, keeping the balance', async () => {
+    const { db, repos, nam, nam2, huy } = await twoNams()
+    const id = await repos.transactions.create(lau([{ friendId: nam, amount: 100000 }, { friendId: huy, amount: 100000 }]))
+    const tx = (await db.transactions.get(id))!
+    const now = new Date().toISOString()
+    await db.debts.add({ id: crypto.randomUUID(), transactionId: tx.id, friendId: nam2, amount: 50000, createdAt: now, updatedAt: now, deletedAt: null })
+
+    await repos.friends.mergeDuplicates()
+
+    const debts = (await repos.transactions.get(id))!.debts
+    expect(debts.filter((d) => d.friendId === nam).map((d) => d.amount)).toEqual([150000])
+    expect(new Set(debts.map((d) => d.friendId)).size).toBe(debts.length)
+  })
+
+  test('returns 0 when there are no duplicates', async () => {
+    const { repos } = await setup()
+    expect(await repos.friends.mergeDuplicates()).toBe(0)
+  })
+})
+
 describe('ledger', () => {
   test('debt entries join transaction date and note', async () => {
     const { repos, nam } = await setup()
@@ -160,6 +204,15 @@ describe('ledger', () => {
     expect(await repos.ledger.listSettlements(nam)).toHaveLength(1)
     await repos.ledger.removeSettlement(id)
     expect(await repos.ledger.listSettlements()).toEqual([])
+  })
+
+  test('debts of a deleted transaction are excluded even when the debt itself is live', async () => {
+    const { db, repos, nam } = await setup()
+    const id = await repos.transactions.create(lau([{ friendId: nam, amount: 150000 }]))
+    const tx = (await db.transactions.get(id))!
+    // Simulates a merge where the transaction tombstone arrived but the debt tombstone did not.
+    await db.transactions.put({ ...tx, deletedAt: '2026-10-13T00:00:00.000Z' })
+    expect(await repos.ledger.listDebtEntries()).toEqual([])
   })
 
   test('targeted settlement stores debtIds', async () => {

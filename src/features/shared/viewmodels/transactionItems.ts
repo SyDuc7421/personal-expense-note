@@ -1,5 +1,6 @@
 import { myShare } from '@/domain/balance'
 import { getCategory } from '@/domain/categories'
+import { needsReview } from '@/domain/sync/integrity'
 import type { CategoryId, TransactionType, TransactionWithDebts } from '@/domain/types'
 import { formatVND } from '@/lib/format'
 
@@ -12,6 +13,7 @@ export interface TransactionListItem {
   date: string
   amountLabel: string
   debtorNames: string[]
+  needsReview: boolean
 }
 
 export function toTransactionListItem(tx: TransactionWithDebts, friendNames: Map<string, string>): TransactionListItem {
@@ -24,6 +26,7 @@ export function toTransactionListItem(tx: TransactionWithDebts, friendNames: Map
     date: tx.date,
     amountLabel: tx.type === 'income' ? `+${formatVND(tx.amount)}` : formatVND(tx.amount),
     debtorNames: tx.debts.map((d) => friendNames.get(d.friendId) ?? '?').sort((a, b) => a.localeCompare(b, 'vi')),
+    needsReview: needsReview(tx),
   }
 }
 

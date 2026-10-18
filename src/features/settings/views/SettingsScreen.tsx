@@ -9,11 +9,13 @@ import { FriendsSection } from './FriendsSection'
 import { LanguageSection } from './LanguageSection'
 import { ReminderSection } from './ReminderSection'
 import { Section } from './Section'
+import { SyncSection } from './SyncSection'
 
 const CONFIRM_COPY = {
   import: { title: 'settings.importConfirmTitle', body: 'settings.importConfirmBody', action: 'settings.import' },
   clear1: { title: 'settings.clearConfirmTitle', body: 'settings.clearConfirmBody', action: 'common.delete' },
   clear2: { title: 'settings.clearConfirmAgainTitle', body: 'settings.clearConfirmAgainBody', action: 'settings.clearAll' },
+  disableSync: { title: 'settings.syncDisableConfirmTitle', body: 'settings.syncDisableConfirmBody', action: 'settings.syncDisable' },
 } as const
 
 export function SettingsScreen() {
@@ -28,6 +30,7 @@ export function SettingsScreen() {
   return (
     <div className="divide-y">
       <FriendsSection vm={vm} />
+      <SyncSection vm={vm} />
       <BackupSection vm={vm} />
       <ReminderSection vm={vm} />
       <LanguageSection vm={vm} />

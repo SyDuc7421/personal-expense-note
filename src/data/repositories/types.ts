@@ -29,6 +29,8 @@ export interface FriendRepository {
   setArchived(id: string, archived: boolean): Promise<void>
   /** Only allowed when the friend has no debts or settlements at all; otherwise archive. */
   remove(id: string): Promise<void>
+  /** Spec 9.6: moves debts/settlements of same-name friends to the oldest one and deletes the rest. Returns how many were removed. */
+  mergeDuplicates(): Promise<number>
 }
 
 export type FriendDebtEntry = DebtEntry & { friendId: string }
@@ -57,10 +59,30 @@ export interface BackupService {
   clearAll(): Promise<void>
 }
 
+export type SyncError = 'unauthorized' | 'conflict' | 'newerSchema' | 'invalidRemote' | 'failed'
+
+export type SyncStatus = { phase: 'disabled' | 'idle' | 'syncing' | 'offline' } | { phase: 'error'; error: SyncError }
+
+export interface SyncService {
+  /** Resolves when done; never throws. Concurrent calls join the running sync and schedule one rerun. */
+  sync(): Promise<void>
+  getStatus(): SyncStatus
+  /** For useSyncExternalStore. */
+  subscribe(listener: () => void): () => void
+  /** Generates a new code (a new store on the server), saves it and syncs. */
+  createSecret(): Promise<string>
+  /** Throws DomainError syncCodeNotFound (saving nothing) when the server has no data for the code; else saves it and syncs. */
+  joinWithSecret(secret: string): Promise<void>
+  disable(): Promise<void>
+  /** Any synced record changed since the last upload. Works inside a live query. */
+  hasPendingChanges(): Promise<boolean>
+}
+
 export interface Repositories {
   transactions: TransactionRepository
   friends: FriendRepository
   ledger: LedgerRepository
   meta: MetaRepository
   backup: BackupService
+  sync: SyncService
 }

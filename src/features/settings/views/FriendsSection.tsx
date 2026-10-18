@@ -1,8 +1,9 @@
-import { Archive, ArchiveRestore, Check, Pencil, Trash2, X } from 'lucide-react'
+import { Archive, ArchiveRestore, Check, ChevronDown, Pencil, Trash2, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Amount } from '@/components/Amount'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { cn } from '@/lib/utils'
 import type { SettingsViewModel } from '../viewmodels/useSettingsViewModel'
 import { Section } from './Section'
 
@@ -55,27 +56,42 @@ export function FriendsSection({ vm }: { vm: SettingsViewModel }) {
                 </Button>
               </li>
             ) : (
-              <li key={f.id} className="flex items-center gap-1 py-1">
-                <span className={f.archived ? 'min-w-0 flex-1 truncate text-muted-foreground' : 'min-w-0 flex-1 truncate'}>
-                  {f.name}
-                  {f.archived && <span className="ml-1 text-xs">({t('settings.archived')})</span>}
-                </span>
-                <Amount label={f.balanceLabel} tone="muted" className="text-sm" />
-                <Button variant="ghost" size="icon" aria-label={`${t('settings.rename')} ${f.name}`} onClick={() => actions.startEdit(f.id)}>
-                  <Pencil />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  aria-label={`${t(f.archived ? 'settings.unarchive' : 'settings.archive')} ${f.name}`}
-                  onClick={() => void actions.toggleArchive(f.id)}
+              <li key={f.id} className="py-1">
+                <button
+                  type="button"
+                  className="flex min-h-11 w-full items-center gap-2 text-left"
+                  aria-expanded={state.expandedFriendId === f.id}
+                  onClick={() => actions.toggleFriend(f.id)}
                 >
-                  {f.archived ? <ArchiveRestore /> : <Archive />}
-                </Button>
-                {f.canDelete && (
-                  <Button variant="ghost" size="icon" aria-label={`${t('common.delete')} ${f.name}`} onClick={() => void actions.deleteFriend(f.id)}>
-                    <Trash2 />
-                  </Button>
+                  <span className={f.archived ? 'min-w-0 flex-1 truncate text-muted-foreground' : 'min-w-0 flex-1 truncate'}>
+                    {f.name}
+                    {f.archived && <span className="ml-1 text-xs">({t('settings.archived')})</span>}
+                  </span>
+                  <Amount label={f.balanceLabel} tone="muted" className="text-sm" />
+                  <ChevronDown
+                    aria-hidden
+                    className={cn('size-4 text-muted-foreground transition-transform', state.expandedFriendId === f.id && 'rotate-180')}
+                  />
+                </button>
+                {state.expandedFriendId === f.id && (
+                  <div className="flex justify-end gap-1">
+                    <Button variant="ghost" size="icon" aria-label={`${t('settings.rename')} ${f.name}`} onClick={() => actions.startEdit(f.id)}>
+                      <Pencil />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      aria-label={`${t(f.archived ? 'settings.unarchive' : 'settings.archive')} ${f.name}`}
+                      onClick={() => void actions.toggleArchive(f.id)}
+                    >
+                      {f.archived ? <ArchiveRestore /> : <Archive />}
+                    </Button>
+                    {f.canDelete && (
+                      <Button variant="ghost" size="icon" aria-label={`${t('common.delete')} ${f.name}`} onClick={() => void actions.deleteFriend(f.id)}>
+                        <Trash2 />
+                      </Button>
+                    )}
+                  </div>
                 )}
               </li>
             ),

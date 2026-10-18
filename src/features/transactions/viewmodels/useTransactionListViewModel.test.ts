@@ -80,3 +80,14 @@ test('labels today and yesterday groups', async () => {
   expect(result.current.state.groups[0].label).toBe('Hôm nay')
   if (yesterday.getMonth() === now.getMonth()) expect(result.current.state.groups[1].label).toBe('Hôm qua')
 })
+
+test('flags a transaction whose debts exceed its amount (two devices edited it)', async () => {
+  const { db, repos } = await seed()
+  const lau = (await db.transactions.toArray()).find((t) => t.note === 'lẩu')!
+  await db.transactions.put({ ...lau, amount: 200000 })
+  const { result } = renderViewModel(() => useTransactionListViewModel({ initialMonth: '2026-10' }), repos)
+  await waitFor(() => expect(result.current.state.isLoading).toBe(false))
+  const items = result.current.state.groups.flatMap((g) => g.items)
+  expect(items.find((i) => i.note === 'lẩu')!.needsReview).toBe(true)
+  expect(items.find((i) => i.note === 'cafe')!.needsReview).toBe(false)
+})
