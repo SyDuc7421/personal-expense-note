@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { App } from '@/app/App'
 import { createDb } from '@/data/db'
 import { createDexieRepositories } from '@/data/repositories/dexie'
+import { startSyncTriggers } from '@/data/sync/triggers'
 import { detectLanguage, initI18n, isLanguage } from '@/i18n'
 import './index.css'
 
@@ -19,6 +20,7 @@ async function start() {
       <App repositories={repositories} />
     </StrictMode>,
   )
+  startSyncTriggers(repositories.sync)
 }
 
 void start()
