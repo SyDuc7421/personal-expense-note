@@ -1,5 +1,6 @@
 import { friendBalance } from '@/domain/balance'
 import { DomainError } from '@/domain/errors'
+import { findDuplicateFriendGroups } from '@/domain/sync/integrity'
 import { normalize } from '@/domain/text'
 import type { Friend } from '@/domain/types'
 import type { ExpenseNoteDB } from '@/data/db'
@@ -68,6 +69,35 @@ export function createFriendRepository(db: ExpenseNoteDB): FriendRepository {
         // Deleting a friend that debts/settlements still point at would orphan them (nameless rows, phantom balances).
         if (debts.length > 0 || settlements.length > 0) throw new DomainError('friendHasHistory')
         await db.friends.put({ ...friend, ...tombstone(friend) })
+      })
+    },
+
+    async mergeDuplicates() {
+      return db.transaction('rw', db.friends, db.debts, db.settlements, async () => {
+        let removed = 0
+        for (const [keeper, ...duplicates] of findDuplicateFriendGroups(await db.friends.toArray())) {
+          for (const dup of duplicates) {
+            const keeperDebts = await db.debts.where('friendId').equals(keeper.id).filter(isAlive).toArray()
+            for (const debt of await db.debts.where('friendId').equals(dup.id).filter(isAlive).toArray()) {
+              // One friend must not owe twice on one transaction (the edit form would reject it): fold into the keeper's debt.
+              const existing = keeperDebts.find((d) => d.transactionId === debt.transactionId)
+              if (existing) {
+                existing.amount += debt.amount
+                Object.assign(existing, touch(existing))
+                await db.debts.put(existing)
+                await db.debts.put({ ...debt, ...tombstone(debt) })
+              } else {
+                await db.debts.put({ ...debt, friendId: keeper.id, ...touch(debt) })
+              }
+            }
+            for (const s of await db.settlements.where('friendId').equals(dup.id).filter(isAlive).toArray()) {
+              await db.settlements.put({ ...s, friendId: keeper.id, ...touch(s) })
+            }
+            await db.friends.put({ ...dup, ...tombstone(dup) })
+            removed++
+          }
+        }
+        return removed
       })
     },
   }

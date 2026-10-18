@@ -29,6 +29,8 @@ export interface FriendRepository {
   setArchived(id: string, archived: boolean): Promise<void>
   /** Only allowed when the friend has no debts or settlements at all; otherwise archive. */
   remove(id: string): Promise<void>
+  /** Spec 9.6: moves debts/settlements of same-name friends to the oldest one and deletes the rest. Returns how many were removed. */
+  mergeDuplicates(): Promise<number>
 }
 
 export type FriendDebtEntry = DebtEntry & { friendId: string }

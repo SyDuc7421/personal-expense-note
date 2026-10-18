@@ -185,5 +185,8 @@ export const vi: Resources = {
     backupAction: 'Export',
     install: 'Cài Personal expense note: bấm Chia sẻ, rồi “Thêm vào MH chính”.',
     dismiss: 'Ẩn',
+    duplicateFriends: 'Có bạn bè bị trùng tên.',
+    mergeFriends: 'Gộp',
+    friendsMerged: 'Đã gộp bạn bè',
   },
 }

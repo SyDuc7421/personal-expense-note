@@ -183,6 +183,9 @@ export const en = {
     backupAction: 'Export',
     install: 'Install Personal expense note: tap Share, then “Add to Home Screen”.',
     dismiss: 'Dismiss',
+    duplicateFriends: 'Some friends have the same name.',
+    mergeFriends: 'Merge',
+    friendsMerged: 'Friends merged',
   },
 }
 
