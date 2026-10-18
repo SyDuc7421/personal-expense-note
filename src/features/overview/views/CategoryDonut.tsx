@@ -15,11 +15,12 @@ export function CategoryDonut({ slices }: { slices: DonutSlice[] }) {
         <p className="text-sm text-muted-foreground">{t('overview.noSpendThisMonth')}</p>
       ) : (
         <div className="flex items-center gap-4">
-          <div className="size-36 shrink-0" role="img" aria-label={t('overview.byCategory')}>
+          <div className="size-36 shrink-0 [&_*]:outline-none" role="img" aria-label={t('overview.byCategory')}>
             <ResponsiveContainer width="100%" height="100%">
               <PieChart accessibilityLayer={false}>
                 <Pie
                   data={slices}
+                  rootTabIndex={-1}
                   dataKey="value"
                   nameKey="category"
                   innerRadius="62%"
