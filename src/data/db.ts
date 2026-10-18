@@ -1,7 +1,7 @@
 import Dexie, { type Table } from 'dexie'
 import type { Debt, Friend, Meta, Settlement, Transaction } from '@/domain/types'
 
-export class GhiSoDB extends Dexie {
+export class ExpenseNoteDB extends Dexie {
   friends!: Table<Friend, string>
   transactions!: Table<Transaction, string>
   debts!: Table<Debt, string>
@@ -20,6 +20,6 @@ export class GhiSoDB extends Dexie {
   }
 }
 
-export function createDb(name = 'ghi-so'): GhiSoDB {
-  return new GhiSoDB(name)
+export function createDb(name = 'personal-expense-note'): ExpenseNoteDB {
+  return new ExpenseNoteDB(name)
 }

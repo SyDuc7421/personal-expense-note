@@ -1,4 +1,4 @@
-# Ghi Sổ: Spec
+# Personal expense note: Spec
 
 > App quản lý chi tiêu cá nhân + sổ nợ bạn bè. Chạy offline hoàn toàn trên iPhone dưới dạng PWA. Dữ liệu làm việc nằm trên máy (local-first), đồng bộ giữa các thiết bị qua một **JSON snapshot** lưu trên Vercel.
 
@@ -225,14 +225,14 @@ Bottom tab bar gồm 4 tab: **Tổng quan · Giao dịch · Nợ · Cài đặt*
 
 ### 7.4 Cài đặt
 - Quản lý bạn bè: thêm, đổi tên, archive.
-- **Export JSON** (tải file `ghi-so-backup-YYYY-MM-DD.json`, đồng thời cập nhật `meta.lastExportAt`).
+- **Export JSON** (tải file `personal-expense-note-backup-YYYY-MM-DD.json`, đồng thời cập nhật `meta.lastExportAt`).
 - **Import JSON**: validate schema, confirm "sẽ ghi đè toàn bộ dữ liệu", import trong một Dexie transaction.
 - Sửa mẫu tin nhắn nhắc nợ.
 - Xóa toàn bộ dữ liệu (confirm 2 lần).
 
 ## 8. PWA & iOS
 
-- `manifest`: `name: "Ghi Sổ"`, `display: "standalone"`, `theme_color`, icons 192/512 + `apple-touch-icon` 180×180.
+- `manifest`: `name: "Personal expense note"`, `short_name: "Expense Note"` (nhãn icon trên Home Screen), `display: "standalone"`, `theme_color`, icons 192/512 + `apple-touch-icon` 180×180.
 - Precache toàn bộ build. App phải mở được khi bật Airplane mode.
 - Hỗ trợ safe area: `viewport-fit=cover` + `env(safe-area-inset-*)` cho bottom tab bar.
 - Gọi `navigator.storage.persist()` lúc khởi động (best-effort).
@@ -252,7 +252,7 @@ Bottom tab bar gồm 4 tab: **Tổng quan · Giao dịch · Nợ · Cài đặt*
 ### 9.2 Format snapshot
 ```ts
 interface Snapshot {
-  format: 'ghi-so-snapshot';
+  format: 'personal-expense-note-snapshot';
   schemaVersion: number;        // tăng khi đổi data model; client cũ gặp version mới hơn thì từ chối merge và báo cập nhật app
   updatedAt: string;
   updatedBy: string;            // deviceId

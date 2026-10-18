@@ -1,7 +1,7 @@
 import type { Resources } from './en'
 
 export const vi: Resources = {
-  app: { name: 'Ghi Sổ' },
+  app: { name: 'Personal expense note' },
   tabs: { overview: 'Tổng quan', transactions: 'Giao dịch', debts: 'Nợ', settings: 'Cài đặt' },
   common: {
     save: 'Lưu',
@@ -39,7 +39,7 @@ export const vi: Resources = {
     duplicateName: 'Đã có bạn trùng tên.',
     nonZeroBalance: 'Không xóa được bạn còn nợ. Hãy lưu trữ (archive).',
     friendHasHistory: 'Bạn này đã có lịch sử giao dịch. Hãy lưu trữ thay vì xóa.',
-    invalidBackup: 'File không phải bản backup Ghi Sổ hợp lệ.',
+    invalidBackup: 'File không phải bản backup Personal expense note hợp lệ.',
     newerSchema: 'Bản backup từ phiên bản app mới hơn. Hãy cập nhật app.',
     splitFriendRequired: 'Chọn bạn cho mọi dòng chia tiền.',
   },
@@ -169,7 +169,7 @@ export const vi: Resources = {
   banners: {
     backup: 'Lâu rồi bạn chưa backup. Export file JSON ngay nhé.',
     backupAction: 'Export',
-    install: 'Cài Ghi Sổ: bấm Chia sẻ, rồi “Thêm vào MH chính”.',
+    install: 'Cài Personal expense note: bấm Chia sẻ, rồi “Thêm vào MH chính”.',
     dismiss: 'Ẩn',
   },
 }

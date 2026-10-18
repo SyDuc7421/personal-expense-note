@@ -1,5 +1,5 @@
 export const en = {
-  app: { name: 'Ghi Sổ' },
+  app: { name: 'Personal expense note' },
   tabs: { overview: 'Overview', transactions: 'Transactions', debts: 'Debts', settings: 'Settings' },
   common: {
     save: 'Save',
@@ -37,7 +37,7 @@ export const en = {
     duplicateName: 'A friend with this name already exists.',
     nonZeroBalance: 'Cannot delete a friend with an open balance. Archive instead.',
     friendHasHistory: 'This friend has transaction history. Archive instead of deleting.',
-    invalidBackup: 'This file is not a valid Ghi Sổ backup.',
+    invalidBackup: 'This file is not a valid Personal expense note backup.',
     newerSchema: 'This backup was made by a newer app version. Please update the app.',
     splitFriendRequired: 'Choose a friend for every split.',
   },
@@ -167,7 +167,7 @@ export const en = {
   banners: {
     backup: 'You haven’t backed up in a while. Export a JSON backup now.',
     backupAction: 'Export',
-    install: 'Install Ghi Sổ: tap Share, then “Add to Home Screen”.',
+    install: 'Install Personal expense note: tap Share, then “Add to Home Screen”.',
     dismiss: 'Dismiss',
   },
 }

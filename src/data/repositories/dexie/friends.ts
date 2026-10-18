@@ -2,11 +2,11 @@ import { friendBalance } from '@/domain/balance'
 import { DomainError } from '@/domain/errors'
 import { normalize } from '@/domain/text'
 import type { Friend } from '@/domain/types'
-import type { GhiSoDB } from '@/data/db'
+import type { ExpenseNoteDB } from '@/data/db'
 import type { FriendRepository } from '../types'
 import { isAlive, newSyncable, tombstone, touch } from './common'
 
-export function createFriendRepository(db: GhiSoDB): FriendRepository {
+export function createFriendRepository(db: ExpenseNoteDB): FriendRepository {
   async function alive(): Promise<Friend[]> {
     return db.friends.filter(isAlive).toArray()
   }

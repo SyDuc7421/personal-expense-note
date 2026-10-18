@@ -6,13 +6,13 @@ import { todayISO } from '@/lib/format'
 
 export const LAST_EXPORT_KEY = 'lastExportAt'
 
-/** Downloads ghi-so-backup-YYYY-MM-DD.json and records meta.lastExportAt. Throws on failure. */
+/** Downloads personal-expense-note-backup-YYYY-MM-DD.json and records meta.lastExportAt. Throws on failure. */
 export function useExportBackup() {
   const { t } = useTranslation()
   const { backup, meta } = useRepositories()
   return async function exportBackup() {
     const snapshot = await backup.exportSnapshot()
-    downloadJson(`ghi-so-backup-${todayISO()}.json`, snapshot)
+    downloadJson(`personal-expense-note-backup-${todayISO()}.json`, snapshot)
     await meta.set(LAST_EXPORT_KEY, new Date().toISOString())
     toast.success(t('settings.exported'))
   }

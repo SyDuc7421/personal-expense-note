@@ -1,7 +1,7 @@
-import type { GhiSoDB } from '@/data/db'
+import type { ExpenseNoteDB } from '@/data/db'
 import type { MetaRepository } from '../types'
 
-export function createMetaRepository(db: GhiSoDB): MetaRepository {
+export function createMetaRepository(db: ExpenseNoteDB): MetaRepository {
   return {
     async get(key) {
       return (await db.meta.get(key))?.value

@@ -1,10 +1,10 @@
 import { DomainError } from '@/domain/errors'
 import type { Settlement } from '@/domain/types'
-import type { GhiSoDB } from '@/data/db'
+import type { ExpenseNoteDB } from '@/data/db'
 import type { FriendDebtEntry, LedgerRepository } from '../types'
 import { byCreated, isAlive, newSyncable, tombstone } from './common'
 
-export function createLedgerRepository(db: GhiSoDB): LedgerRepository {
+export function createLedgerRepository(db: ExpenseNoteDB): LedgerRepository {
   return {
     async listDebtEntries(friendId) {
       const debts = await (friendId ? db.debts.where('friendId').equals(friendId) : db.debts.toCollection())

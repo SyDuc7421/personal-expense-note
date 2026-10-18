@@ -1,6 +1,6 @@
 import { DomainError } from '@/domain/errors'
 import { SCHEMA_VERSION, SNAPSHOT_FORMAT, snapshotSchema, type Snapshot } from '@/domain/snapshot'
-import type { GhiSoDB } from './db'
+import type { ExpenseNoteDB } from './db'
 import type { BackupService, MetaRepository } from './repositories/types'
 
 async function deviceId(meta: MetaRepository): Promise<string> {
@@ -21,7 +21,7 @@ export function parseSnapshot(json: unknown): Snapshot {
   return result.data
 }
 
-export function createBackupService(db: GhiSoDB, meta: MetaRepository): BackupService {
+export function createBackupService(db: ExpenseNoteDB, meta: MetaRepository): BackupService {
   const tables = [db.friends, db.transactions, db.debts, db.settlements]
 
   return {

@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-export const SNAPSHOT_FORMAT = 'ghi-so-snapshot'
+export const SNAPSHOT_FORMAT = 'personal-expense-note-snapshot'
 export const SCHEMA_VERSION = 1
 
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/)

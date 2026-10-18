@@ -21,7 +21,7 @@ test('export -> clearAll -> import restores identical data, including tombstones
     debts: await db.debts.toArray(), settlements: await db.settlements.toArray(),
   }
   const snapshot = await repos.backup.exportSnapshot()
-  expect(snapshot.format).toBe('ghi-so-snapshot')
+  expect(snapshot.format).toBe('personal-expense-note-snapshot')
   expect(snapshot.schemaVersion).toBe(1)
   expect(snapshot.transactions).toHaveLength(2)
 

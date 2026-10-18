@@ -63,7 +63,7 @@ test('rename and archive', async () => {
 test('export downloads backup and records lastExportAt', async () => {
   const { view, repos } = await setup()
   await act(() => view.result.current.actions.exportJson())
-  expect(downloadJson).toHaveBeenCalledWith(expect.stringMatching(/^ghi-so-backup-\d{4}-\d{2}-\d{2}\.json$/), expect.objectContaining({ format: 'ghi-so-snapshot' }))
+  expect(downloadJson).toHaveBeenCalledWith(expect.stringMatching(/^personal-expense-note-backup-\d{4}-\d{2}-\d{2}\.json$/), expect.objectContaining({ format: 'personal-expense-note-snapshot' }))
   expect(await repos.meta.get('lastExportAt')).toBeTruthy()
 })
 

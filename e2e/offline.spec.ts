@@ -10,7 +10,7 @@ test('app loads offline after the service worker is active', async ({ page, cont
 
   await context.setOffline(true)
   await page.reload()
-  await expect(page.getByRole('heading', { name: 'Ghi Sổ' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Personal expense note' })).toBeVisible()
   await page.getByRole('link', { name: 'Cài đặt' }).click()
   await page.getByLabel('Tên bạn').fill('Offline')
   await page.getByRole('button', { name: 'Thêm bạn' }).click()

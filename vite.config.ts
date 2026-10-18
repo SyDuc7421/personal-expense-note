@@ -13,8 +13,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'apple-touch-icon.png'],
       manifest: {
-        name: 'Ghi Sổ',
-        short_name: 'Ghi Sổ',
+        name: 'Personal expense note',
+        short_name: 'Expense Note',
         description: 'Personal expenses and friend debts',
         display: 'standalone',
         start_url: '/',

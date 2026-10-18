@@ -1,6 +1,6 @@
 import { DomainError } from '@/domain/errors'
 import type { Debt, NewTransaction, Transaction, TransactionWithDebts } from '@/domain/types'
-import type { GhiSoDB } from '@/data/db'
+import type { ExpenseNoteDB } from '@/data/db'
 import type { TransactionRepository } from '../types'
 import { byCreated, isAlive, newSyncable, tombstone, touch } from './common'
 
@@ -18,7 +18,7 @@ function validate(input: NewTransaction): void {
 const newestFirst = (a: Transaction, b: Transaction) =>
   b.date.localeCompare(a.date) || b.createdAt.localeCompare(a.createdAt) || b.id.localeCompare(a.id)
 
-export function createTransactionRepository(db: GhiSoDB): TransactionRepository {
+export function createTransactionRepository(db: ExpenseNoteDB): TransactionRepository {
   async function withDebts(txs: Transaction[]): Promise<TransactionWithDebts[]> {
     const debts = await db.debts.where('transactionId').anyOf(txs.map((t) => t.id)).filter(isAlive).toArray()
     return txs.map((t) => ({ ...t, debts: debts.filter((d) => d.transactionId === t.id).sort(byCreated) }))
