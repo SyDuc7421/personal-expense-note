@@ -152,6 +152,7 @@ export const vi: Resources = {
     importConfirmBody: 'Thao tác này sẽ ghi đè TOÀN BỘ dữ liệu hiện tại.',
     imported: 'Đã import backup',
     exported: 'Đã export backup',
+    iosDataWarning: 'Trên iPhone/iPad, xóa app khỏi màn hình chính sẽ xóa toàn bộ dữ liệu. Hãy export backup thường xuyên.',
     lastExport: 'Export lần cuối: {{date}}',
     neverExported: 'Chưa export lần nào',
     language: 'Ngôn ngữ',

@@ -152,6 +152,7 @@ export const en = {
     exported: 'Backup exported',
     lastExport: 'Last export: {{date}}',
     neverExported: 'Never exported',
+    iosDataWarning: 'On iPhone/iPad, removing the app from the Home Screen deletes all its data. Export a backup regularly.',
     language: 'Language',
     reminderTemplate: 'Reminder message',
     reminderTemplateHint: 'Placeholders: {name}, {items}, {total}',

@@ -3,9 +3,15 @@ import { useRepositories } from '@/data/RepositoryProvider'
 
 const DISMISSED_KEY = 'installGuideDismissed'
 
+/** iPhone/iPad in any browser or as a home-screen app (iPadOS reports a Mac UA with touch). */
+export function isIosDevice(nav: Navigator): boolean {
+  const ua = nav.userAgent
+  return /iPhone|iPad|iPod/.test(ua) || (ua.includes('Macintosh') && nav.maxTouchPoints > 1)
+}
+
 export function isIosSafariBrowser(nav: Navigator, standaloneMedia: boolean): boolean {
   const ua = nav.userAgent
-  const isIos = /iPhone|iPad|iPod/.test(ua) || (ua.includes('Macintosh') && nav.maxTouchPoints > 1)
+  const isIos = isIosDevice(nav)
   const isSafari = /Safari/.test(ua) && !/CriOS|FxiOS|EdgiOS/.test(ua)
   const standalone = (nav as Navigator & { standalone?: boolean }).standalone === true || standaloneMedia
   return isIos && isSafari && !standalone

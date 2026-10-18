@@ -11,6 +11,7 @@ import { errorKey } from '@/features/shared/viewmodels/errors'
 import { useBalances } from '@/features/shared/viewmodels/useBalances'
 import { LAST_EXPORT_KEY, useExportBackup } from '@/features/shared/viewmodels/useExportBackup'
 import { useFriends } from '@/features/shared/viewmodels/useFriends'
+import { isIosDevice } from '@/features/shared/viewmodels/useInstallGuideViewModel'
 import { REMINDER_TEMPLATE_KEY, useReminderTemplate } from '@/features/shared/viewmodels/useReminderTemplate'
 import { useRepoQuery } from '@/features/shared/viewmodels/useRepoQuery'
 
@@ -35,6 +36,8 @@ export interface SettingsViewModel {
     error: string | null
     confirm: SettingsConfirm
     lastExportLabel: string | null
+    /** iOS deletes a home-screen app's data together with its icon. */
+    showIosDataWarning: boolean
     language: Language
     languages: Language[]
     reminderTemplate: string
@@ -108,6 +111,7 @@ export function useSettingsViewModel(): SettingsViewModel {
       error,
       confirm,
       lastExportLabel: lastExport.data ? format(parseISO(lastExport.data), 'dd/MM/yyyy HH:mm') : null,
+      showIosDataWarning: isIosDevice(navigator),
       language: i18n.language === 'en' ? 'en' : 'vi',
       languages: LANGUAGES,
       reminderTemplate: templateDraft ?? reminder.template,
