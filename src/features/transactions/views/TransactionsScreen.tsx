@@ -47,7 +47,7 @@ export function TransactionsScreen() {
       <Button
         size="icon-lg"
         aria-label={t('transactions.add')}
-        className="fixed right-[max(1rem,calc(50%-14rem+1rem))] bottom-[calc(5rem+env(safe-area-inset-bottom))] z-30 size-14 rounded-full shadow-lg"
+        className="fixed right-[max(1rem,calc(50%-14rem+1rem))] bottom-[calc(5rem+env(safe-area-inset-bottom))] z-30 size-14 rounded-full"
         onClick={actions.openCreate}
       >
         <Plus className="size-6" />
