@@ -9,3 +9,4 @@ playwright-report/
 scripts/.shot.mjs
 scripts/.seed-shot.mjs
 scripts/.overview-shot.mjs
+scripts/.form-shot.mjs

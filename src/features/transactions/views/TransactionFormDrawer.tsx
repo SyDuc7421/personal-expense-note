@@ -105,10 +105,10 @@ export function TransactionFormDrawer({ id, onClose }: { id?: string; onClose: (
                   <fieldset className="flex flex-col gap-2">
                     <legend className="mb-1.5 text-sm font-medium">{t('form.splits')}</legend>
                     {values.splits.map((split, index) => (
-                      <div key={split.key} className="flex items-center gap-2">
+                      <div key={split.key} className="grid grid-cols-2 gap-2">
                         <NativeSelect
                           aria-label={t('form.chooseFriend')}
-                          className="flex-1"
+                          className="min-w-0"
                           value={split.friendId}
                           onChange={(e) => actions.setSplit(index, { friendId: e.target.value })}
                         >
@@ -119,16 +119,19 @@ export function TransactionFormDrawer({ id, onClose }: { id?: string; onClose: (
                             </option>
                           ))}
                         </NativeSelect>
-                        <Input
-                          aria-label={t('form.amount')}
-                          inputMode="decimal"
-                          className="w-32 tabular-nums"
-                          value={split.amount}
-                          onChange={(e) => actions.setSplit(index, { amount: e.target.value })}
-                        />
-                        <Button type="button" variant="ghost" size="icon" aria-label={t('form.removeSplit')} onClick={() => actions.removeSplit(index)}>
-                          <X />
-                        </Button>
+                        {/* Amount + remove share the second column so it lines up with Date above. */}
+                        <div className="flex min-w-0 items-center gap-1">
+                          <Input
+                            aria-label={t('form.amount')}
+                            inputMode="decimal"
+                            className="min-w-0 flex-1 tabular-nums"
+                            value={split.amount}
+                            onChange={(e) => actions.setSplit(index, { amount: e.target.value })}
+                          />
+                          <Button type="button" variant="ghost" size="icon" aria-label={t('form.removeSplit')} onClick={() => actions.removeSplit(index)}>
+                            <X />
+                          </Button>
+                        </div>
                       </div>
                     ))}
                     <div className="grid grid-cols-2 gap-2">
