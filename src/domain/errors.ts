@@ -10,6 +10,7 @@ export type DomainErrorCode =
   | 'friendHasHistory'
   | 'invalidBackup'
   | 'newerSchema'
+  | 'invalidDebtSelection'
 
 /** Error with a stable code; the UI translates `code` via i18n `errors.<code>`. */
 export class DomainError extends Error {

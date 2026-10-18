@@ -28,8 +28,17 @@ export function createLedgerRepository(db: ExpenseNoteDB): LedgerRepository {
 
     async addSettlement(input) {
       if (!Number.isInteger(input.amount) || input.amount <= 0) throw new DomainError('invalidAmount')
-      const settlement: Settlement = { ...newSyncable(), ...input, note: input.note.trim() }
-      await db.settlements.add(settlement)
+      const { debtIds, ...fields } = input
+      const settlement: Settlement = { ...newSyncable(), ...fields, note: input.note.trim(), ...(debtIds && { debtIds }) }
+      await db.transaction('rw', db.settlements, db.debts, async () => {
+        if (debtIds) {
+          const debts = await db.debts.bulkGet(debtIds)
+          const valid = debtIds.length > 0 && new Set(debtIds).size === debtIds.length
+            && debts.every((d) => isAlive(d) && d.friendId === input.friendId)
+          if (!valid) throw new DomainError('invalidDebtSelection')
+        }
+        await db.settlements.add(settlement)
+      })
       return settlement.id
     },
 

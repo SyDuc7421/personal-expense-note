@@ -46,3 +46,13 @@ test('sort by amount puts largest balance first', async () => {
   expect(result.current.state.sortBy).toBe('amount')
   expect(result.current.state.items[0].friendId).toBe(huy)
 })
+
+test('oldest age follows targeted settlements, not plain FIFO', async () => {
+  const { repos, huy } = await seed()
+  // Paying the newer grab by item leaves the older lẩu unpaid; plain FIFO would have cleared lẩu instead.
+  const grab = (await repos.ledger.listDebtEntries(huy)).find((e) => e.note === 'grab')!
+  await repos.ledger.addSettlement({ friendId: huy, amount: 400000, date: '2026-10-17', note: '', debtIds: [grab.debtId] })
+  const { result } = renderViewModel(() => useDebtsViewModel({ today }), repos)
+  await waitFor(() => expect(result.current.state.isLoading).toBe(false))
+  expect(result.current.state.items.find((i) => i.friendId === huy)).toMatchObject({ balance: 150000, ageDays: 38 })
+})

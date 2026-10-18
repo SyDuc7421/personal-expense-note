@@ -47,6 +47,8 @@ export interface Settlement extends Syncable {
   amount: number
   date: string
   note: string
+  /** Set when the user marked specific debts paid; absent for amount-only settlements. */
+  debtIds?: string[]
 }
 
 export interface Meta {

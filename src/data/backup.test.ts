@@ -35,6 +35,24 @@ test('export -> clearAll -> import restores identical data, including tombstones
   expect(await db.settlements.toArray()).toEqual(before.settlements)
 })
 
+test('round-trips settlement debtIds', async () => {
+  const { repos, nam } = await seeded()
+  const [entry] = await repos.ledger.listDebtEntries(nam)
+  await repos.ledger.addSettlement({ friendId: nam, amount: 50000, date: '2026-10-14', note: '', debtIds: [entry.debtId] })
+  const snapshot = JSON.parse(JSON.stringify(await repos.backup.exportSnapshot()))
+  await repos.backup.clearAll()
+  await repos.backup.importSnapshot(snapshot)
+  const settlements = await repos.ledger.listSettlements(nam)
+  expect(settlements.map((s) => s.debtIds)).toEqual([undefined, [entry.debtId]])
+})
+
+test('a v1 snapshot without debtIds still validates', async () => {
+  const { repos } = await seeded()
+  const snapshot = JSON.parse(JSON.stringify(await repos.backup.exportSnapshot()))
+  expect(snapshot.settlements.every((s: object) => !('debtIds' in s))).toBe(true)
+  expect(() => repos.backup.validateSnapshot(snapshot)).not.toThrow()
+})
+
 test('clearAll removes lastExportAt but keeps other meta', async () => {
   const { repos } = await seeded()
   await repos.meta.set('lastExportAt', '2026-10-01T00:00:00.000Z')
