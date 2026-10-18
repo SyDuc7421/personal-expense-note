@@ -44,3 +44,7 @@ test('ageInDays counts calendar days to today', () => {
   expect(ageInDays('2026-10-12', new Date(2026, 9, 18, 23, 0))).toBe(6)
   expect(ageInDays('2026-10-18', new Date(2026, 9, 18, 1, 0))).toBe(0)
 })
+
+test('friendBalance accepts joined entries without deletedAt', () => {
+  expect(friendBalance([{ amount: 150000 }, { amount: 50000 }], [settlement(100000)])).toBe(100000)
+})
