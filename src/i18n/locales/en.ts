@@ -47,7 +47,7 @@ export const en = {
     multipleAmounts: 'More than one amount — keep only one',
     invalidParts: '/N must be at least the number of people (you + friends)',
     amountTooSmall: 'Amount too small to split',
-    payForAllWithoutMention: '“cho” needs at least one @friend',
+    incomeWithMentions: 'Income cannot be split with friends',
     invalidDate: 'Invalid date',
   },
   overview: {

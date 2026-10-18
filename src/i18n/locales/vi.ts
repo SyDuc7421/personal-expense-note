@@ -49,7 +49,7 @@ export const vi: Resources = {
     multipleAmounts: 'Có nhiều số tiền — chỉ giữ một',
     invalidParts: '/N phải ≥ số người (bạn + bạn bè)',
     amountTooSmall: 'Số tiền quá nhỏ để chia',
-    payForAllWithoutMention: '“cho” cần ít nhất một @bạn',
+    incomeWithMentions: 'Khoản thu không chia với bạn bè được',
     invalidDate: 'Ngày không hợp lệ',
   },
   overview: {
