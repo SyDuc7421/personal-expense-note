@@ -3,6 +3,7 @@ import { useRepositories } from '@/data/RepositoryProvider'
 import { CATEGORIES, detectCategory } from '@/domain/categories'
 import { computeSplit, SplitError } from '@/domain/split'
 import type { CategoryId, NewTransaction, TransactionType } from '@/domain/types'
+import { parseAmountInput } from '@/lib/amountInput'
 import { formatVND, todayISO } from '@/lib/format'
 import { errorKey } from '@/features/shared/viewmodels/errors'
 import { useFriends, type FriendOption } from '@/features/shared/viewmodels/useFriends'
@@ -53,12 +54,6 @@ export interface TransactionFormViewModel {
     cancelDelete(): void
     confirmDelete(): Promise<void>
   }
-}
-
-/** Accepts "600.000", "600 000", "600000"; returns NaN when empty or not a number. */
-export function parseAmountInput(value: string): number {
-  const digits = value.replace(/[.\s,₫đ]/g, '')
-  return /^\d+$/.test(digits) ? Number(digits) : NaN
 }
 
 const emptyValues = (): TransactionFormValues => ({
