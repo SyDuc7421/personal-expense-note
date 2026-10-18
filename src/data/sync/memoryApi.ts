@@ -8,9 +8,13 @@ export interface MemorySyncApi extends SyncApi {
   calls: number
   /** Next N puts answer 412. */
   conflictsLeft: number
-  /** Awaited before a put is applied. */
+  /** Awaited before a get answers / a put is applied. */
+  beforeGet?: () => Promise<void>
   beforePut?: () => Promise<void>
+  pendingGets: number
   pendingPuts: number
+  /** Successful puts. */
+  puts: number
   /** Most syncs seen between a get and its put at the same time. */
   maxConcurrent: number
 }
@@ -30,11 +34,19 @@ export function createMemorySyncApi(): MemorySyncApi {
     snapshots: new Map(),
     calls: 0,
     conflictsLeft: 0,
+    pendingGets: 0,
     pendingPuts: 0,
+    puts: 0,
     maxConcurrent: 0,
 
     async get(secret) {
       check(secret)
+      api.pendingGets++
+      try {
+        await api.beforeGet?.()
+      } finally {
+        api.pendingGets--
+      }
       active++
       api.maxConcurrent = Math.max(api.maxConcurrent, active)
       const snapshot = api.snapshots.get(secret)
@@ -57,6 +69,7 @@ export function createMemorySyncApi(): MemorySyncApi {
         const next = `"${++version}"`
         api.snapshots.set(secret, structuredClone(snapshot))
         etags.set(secret, next)
+        api.puts++
         return { etag: next }
       } finally {
         api.pendingPuts--

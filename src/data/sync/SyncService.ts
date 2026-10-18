@@ -1,3 +1,4 @@
+import Dexie, { type Transaction } from 'dexie'
 import { DomainError } from '@/domain/errors'
 import { SCHEMA_VERSION, SNAPSHOT_FORMAT, type Snapshot } from '@/domain/snapshot'
 import { canonicalJson, EMPTY_SNAPSHOT_DATA, merge, purgeTombstones, SYNC_TABLES, type SnapshotData } from '@/domain/sync/merge'
@@ -12,7 +13,9 @@ import { SyncApiError, type SyncApi } from './api'
 export const SYNC_SECRET_KEY = 'syncSecret'
 export const LAST_SYNC_KEY = 'lastSyncAt'
 const REMOTE_ETAG_KEY = 'remoteEtag'
-const SYNCED_UP_TO_KEY = 'syncedUpTo'
+/** Bumped after every local write (not sync's own); "pending" = it moved since the last upload. */
+const LOCAL_SEQ_KEY = 'localChangeSeq'
+const SYNCED_SEQ_KEY = 'syncedChangeSeq'
 const MAX_ATTEMPTS = 3
 
 /** Ends one sync run with a final status. */
@@ -36,6 +39,26 @@ export function createSyncService(
   let status: SyncStatus = { phase: 'idle' }
   let running: Promise<void> | null = null
   let rerun = false
+  // A counter instead of comparing updatedAt: another device's clock may run ahead of ours.
+  let mergeTx: Transaction | null = null
+  const counted = new WeakSet<Transaction>()
+  const bumpSeq = () =>
+    Dexie.ignoreTransaction(() =>
+      db.transaction('rw', db.meta, async () => {
+        const seq = Number((await db.meta.get(LOCAL_SEQ_KEY))?.value ?? 0)
+        await db.meta.put({ key: LOCAL_SEQ_KEY, value: String(seq + 1) })
+      }),
+    )
+  function countChange(tx: Transaction) {
+    if (tx === mergeTx || counted.has(tx)) return
+    counted.add(tx)
+    tx.on('complete', () => void bumpSeq())
+  }
+  for (const table of tables) {
+    table.hook('creating', (_key, _obj, tx) => countChange(tx))
+    table.hook('updating', (_mods, _key, _obj, tx) => countChange(tx))
+    table.hook('deleting', (_key, _obj, tx) => countChange(tx))
+  }
 
   function setStatus(next: SyncStatus) {
     status = next
@@ -43,7 +66,7 @@ export function createSyncService(
   }
 
   async function resetRemoteState() {
-    await db.meta.bulkDelete([REMOTE_ETAG_KEY, SYNCED_UP_TO_KEY])
+    await db.meta.bulkDelete([REMOTE_ETAG_KEY, SYNCED_SEQ_KEY])
   }
 
   async function fetchRemote(secret: string): Promise<{ data: SnapshotData; etag: string | null }> {
@@ -59,6 +82,7 @@ export function createSyncService(
   /** Reads local data inside the same rw transaction that writes the merge, so a concurrent edit is never overwritten. */
   function mergeIntoLocal(remote: SnapshotData): Promise<SnapshotData> {
     return db.transaction('rw', tables, async () => {
+      mergeTx = Dexie.currentTransaction
       const local: SnapshotData = {
         friends: await db.friends.toArray(),
         transactions: await db.transactions.toArray(),
@@ -78,13 +102,32 @@ export function createSyncService(
         await table.bulkDelete(purged[name])
       }
       return data
+    }).finally(() => {
+      mergeTx = null
     })
   }
 
-  async function attempt(secret: string): Promise<boolean> {
+  const sameData = (a: SnapshotData, b: SnapshotData) =>
+    SYNC_TABLES.every((name) => {
+      const other = new Map((b[name] as Syncable[]).map((r) => [r.id, canonicalJson(r)]))
+      return a[name].length === other.size && (a[name] as Syncable[]).every((r) => other.get(r.id) === canonicalJson(r))
+    })
+
+  /** 'stale' = sync was turned off or the code changed mid-run; nothing more is recorded. */
+  async function attempt(secret: string): Promise<'ok' | 'conflict' | 'stale'> {
+    const seqAtStart = (await meta.get(LOCAL_SEQ_KEY)) ?? '0'
     const remote = await fetchRemote(secret)
     const data = await mergeIntoLocal(remote.data)
     const now = new Date().toISOString()
+    const record = async (etag: string) => {
+      if ((await meta.get(SYNC_SECRET_KEY)) !== secret) return 'stale' as const
+      await meta.set(REMOTE_ETAG_KEY, etag)
+      await meta.set(LAST_SYNC_KEY, now)
+      await meta.set(SYNCED_SEQ_KEY, seqAtStart)
+      return 'ok' as const
+    }
+    // Nothing to add to the server copy: skip the upload (saves quota and doesn't bump the ETag for other devices).
+    if (remote.etag !== null && sameData(data, remote.data)) return record(remote.etag)
     const snapshot: Snapshot = {
       format: SNAPSHOT_FORMAT,
       schemaVersion: SCHEMA_VERSION,
@@ -93,12 +136,7 @@ export function createSyncService(
       ...data,
     }
     const written = await api.put(secret, snapshot, remote.etag)
-    if (!written) return false
-    const newest = SYNC_TABLES.flatMap((name) => (data[name] as Syncable[]).map((r) => r.updatedAt)).sort().at(-1)
-    await meta.set(REMOTE_ETAG_KEY, written.etag)
-    await meta.set(LAST_SYNC_KEY, now)
-    if (newest) await meta.set(SYNCED_UP_TO_KEY, newest)
-    return true
+    return written ? record(written.etag) : 'conflict'
   }
 
   async function runOnce(): Promise<void> {
@@ -108,7 +146,9 @@ export function createSyncService(
     setStatus({ phase: 'syncing' })
     try {
       for (let i = 0; i < MAX_ATTEMPTS; i++) {
-        if (await attempt(secret)) return setStatus({ phase: 'idle' })
+        const result = await attempt(secret)
+        if (result === 'stale') return
+        if (result === 'ok') return setStatus({ phase: 'idle' })
       }
       setStatus({ phase: 'error', error: 'conflict' })
     } catch (e) {
@@ -170,12 +210,7 @@ export function createSyncService(
 
     async hasPendingChanges() {
       if (!(await meta.get(SYNC_SECRET_KEY))) return false
-      const syncedUpTo = await meta.get(SYNCED_UP_TO_KEY)
-      for (const table of tables) {
-        const count = syncedUpTo ? await table.where('updatedAt').above(syncedUpTo).count() : await table.count()
-        if (count > 0) return true
-      }
-      return false
+      return ((await meta.get(LOCAL_SEQ_KEY)) ?? '0') !== ((await meta.get(SYNCED_SEQ_KEY)) ?? '')
     },
   }
   return service
