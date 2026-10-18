@@ -17,19 +17,6 @@ export function friendBalance(debts: Amounted[], settlements: Amounted[]): numbe
   return sum(alive(debts)) - sum(alive(settlements))
 }
 
-/** Applies the settled total to the oldest debts first; returns debts not fully paid, oldest first. */
-export function fifoOutstanding(entries: DebtEntry[], settledTotal: number): (DebtEntry & { remaining: number })[] {
-  const sorted = [...entries].sort((a, b) => a.date.localeCompare(b.date) || a.debtId.localeCompare(b.debtId))
-  let credit = settledTotal
-  const result: (DebtEntry & { remaining: number })[] = []
-  for (const entry of sorted) {
-    const used = Math.min(credit, entry.amount)
-    credit -= used
-    if (entry.amount - used > 0) result.push({ ...entry, remaining: entry.amount - used })
-  }
-  return result
-}
-
 export type DebtAllocation = DebtEntry & { remaining: number }
 
 /**

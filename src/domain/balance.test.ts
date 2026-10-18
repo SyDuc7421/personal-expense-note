@@ -1,5 +1,5 @@
 import fc from 'fast-check'
-import { ageInDays, allocateSettlements, fifoOutstanding, friendBalance, myShare } from './balance'
+import { ageInDays, allocateSettlements, friendBalance, myShare } from './balance'
 import type { Debt, DebtEntry, Settlement, TransactionWithDebts } from './types'
 
 const base = { createdAt: '2026-10-01T00:00:00.000Z', updatedAt: '2026-10-01T00:00:00.000Z', deletedAt: null }
@@ -26,21 +26,6 @@ const entries: DebtEntry[] = [
   { debtId: 'd1', transactionId: 't1', date: '2026-10-12', note: 'lẩu', amount: 150000 },
 ]
 
-test('fifo applies settlements to oldest debts first', () => {
-  expect(fifoOutstanding(entries, 100000)).toEqual([
-    { ...entries[1], remaining: 50000 },
-    { ...entries[0], remaining: 50000 },
-  ])
-  expect(fifoOutstanding(entries, 0).map((e) => e.remaining)).toEqual([150000, 50000])
-  expect(fifoOutstanding(entries, 200000)).toEqual([])
-  expect(fifoOutstanding(entries, 150000)).toEqual([{ ...entries[0], remaining: 50000 }])
-})
-
-test('fifo after debt removed: oldest outstanding shifts to next debt', () => {
-  const remaining = fifoOutstanding([entries[0]], 0)
-  expect(remaining[0].date).toBe('2026-10-15')
-})
-
 test('ageInDays counts calendar days to today', () => {
   expect(ageInDays('2026-10-12', new Date(2026, 9, 18, 23, 0))).toBe(6)
   expect(ageInDays('2026-10-18', new Date(2026, 9, 18, 1, 0))).toBe(0)
@@ -50,21 +35,23 @@ test('friendBalance accepts joined entries without deletedAt', () => {
   expect(friendBalance([{ amount: 150000 }, { amount: 50000 }], [settlement(100000)])).toBe(100000)
 })
 
-test('partial settlement then deleting the oldest debt: age moves to the next debt', () => {
-  // 150k (10/12) + 50k (10/15), settled 100k; then the 10/12 transaction is deleted.
-  const remaining = fifoOutstanding([entries[0]], 100000)
-  expect(remaining).toEqual([])
-  const withNewer = fifoOutstanding([entries[0], { debtId: 'd3', transactionId: 't3', date: '2026-10-16', note: 'x', amount: 80000 }], 100000)
-  expect(withNewer).toEqual([{ debtId: 'd3', transactionId: 't3', date: '2026-10-16', note: 'x', amount: 80000, remaining: 30000 }])
-})
 
 const paid = (amount: number, debtIds?: string[], date = '2026-10-20', createdAt = base.createdAt) => ({ amount, date, createdAt, debtIds })
 const remainingById = (list: { debtId: string; remaining: number }[]) => Object.fromEntries(list.map((e) => [e.debtId, e.remaining]))
 
-test('allocate: amount-only matches fifo', () => {
-  for (const x of [0, 100000, 150000, 200000]) {
-    expect(allocateSettlements(entries, x ? [paid(x)] : []).filter((e) => e.remaining > 0)).toEqual(fifoOutstanding(entries, x))
-  }
+test('allocate: amount-only settlements go to the oldest debts first (plain FIFO)', () => {
+  const owed = (x: number) => allocateSettlements(entries, x ? [paid(x)] : []).filter((e) => e.remaining > 0)
+  expect(owed(100000)).toEqual([{ ...entries[1], remaining: 50000 }, { ...entries[0], remaining: 50000 }])
+  expect(owed(0).map((e) => e.remaining)).toEqual([150000, 50000])
+  expect(owed(200000)).toEqual([])
+  expect(owed(150000)).toEqual([{ ...entries[0], remaining: 50000 }])
+})
+
+test('allocate: partial settlement then deleting the oldest debt moves credit to the next debt', () => {
+  const owed = (es: DebtEntry[]) => allocateSettlements(es, [paid(100000)]).filter((e) => e.remaining > 0)
+  expect(owed([entries[0]])).toEqual([])
+  const d3 = { debtId: 'd3', transactionId: 't3', date: '2026-10-16', note: 'x', amount: 80000 }
+  expect(owed([entries[0], d3])).toEqual([{ ...d3, remaining: 30000 }])
 })
 
 test('allocate: targeted settlement pays the named debt, not the oldest', () => {

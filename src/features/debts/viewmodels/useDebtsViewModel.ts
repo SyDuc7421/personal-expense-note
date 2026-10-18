@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
-import { ageInDays, fifoOutstanding } from '@/domain/balance'
+import { ageInDays, allocateSettlements } from '@/domain/balance'
 import { formatVND } from '@/lib/format'
 import { useBalances } from '@/features/shared/viewmodels/useBalances'
 import { useFriends } from '@/features/shared/viewmodels/useFriends'
@@ -49,8 +49,7 @@ export function useDebtsViewModel(opts: { today?: Date } = {}): DebtsViewModel {
     const list = [...balances.byFriend.entries()]
       .filter(([, l]) => l.balance !== 0)
       .map(([friendId, l]): DebtListItem => {
-        const settled = l.settlements.reduce((acc, s) => acc + s.amount, 0)
-        const oldest = fifoOutstanding(l.entries, settled)[0]
+        const oldest = allocateSettlements(l.entries, l.settlements).find((e) => e.remaining > 0)
         const ageDays = l.balance > 0 && oldest ? ageInDays(oldest.date, now) : null
         return {
           friendId,
