@@ -25,6 +25,8 @@ export function createBackupService(db: ExpenseNoteDB, meta: MetaRepository): Ba
   const tables = [db.friends, db.transactions, db.debts, db.settlements]
 
   return {
+    validateSnapshot: parseSnapshot,
+
     async exportSnapshot() {
       return {
         format: SNAPSHOT_FORMAT,

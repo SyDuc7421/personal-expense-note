@@ -1,5 +1,6 @@
 export const en = {
   app: { name: 'Personal expense note' },
+  a11y: { tabs: 'Main navigation', sort: 'Sort by', previousMonth: 'Previous month', nextMonth: 'Next month' },
   tabs: { overview: 'Overview', transactions: 'Transactions', debts: 'Debts', settings: 'Settings' },
   common: {
     save: 'Save',

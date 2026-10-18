@@ -24,9 +24,12 @@ test('groups by day with myShare totals and debtor badges', async () => {
   await waitFor(() => expect(result.current.state.isLoading).toBe(false))
   const groups = result.current.state.groups
   expect(groups.map((g) => g.date)).toEqual(['2026-10-12', '2026-10-11'])
+  expect(groups[0].label).toBe('Thứ Hai, 12/10')
+  expect(result.current.state.monthLabel).toBe('Tháng Mười 2026')
   expect(groups[0].totalLabel).toBe(formatVND(300000 + 35000))
   const lau = groups[0].items.find((i) => i.note === 'lẩu')!
-  expect([...lau.debtorNames].sort()).toEqual(['Huy', 'Nam'])
+  // sorted so the badge is stable even when debts share a createdAt
+  expect(lau.debtorNames).toEqual(['Huy', 'Nam'])
   expect(lau.amountLabel).toBe(formatVND(600000))
   expect(lau.categoryIcon).toBe('🍜')
   expect(groups[1].items[0].amountLabel).toBe(`+${formatVND(500000)}`)

@@ -1,7 +1,8 @@
 import { DomainError } from '@/domain/errors'
 import type { Debt, NewTransaction, Transaction, TransactionWithDebts } from '@/domain/types'
 import type { ExpenseNoteDB } from '@/data/db'
-import type { TransactionRepository } from '../types'
+import { normalize } from '@/domain/text'
+import type { FriendRepository, TransactionRepository } from '../types'
 import { byCreated, isAlive, newSyncable, tombstone, touch } from './common'
 
 const isPositiveInt = (n: number) => Number.isInteger(n) && n > 0
@@ -18,7 +19,7 @@ function validate(input: NewTransaction): void {
 const newestFirst = (a: Transaction, b: Transaction) =>
   b.date.localeCompare(a.date) || b.createdAt.localeCompare(a.createdAt) || b.id.localeCompare(a.id)
 
-export function createTransactionRepository(db: ExpenseNoteDB): TransactionRepository {
+export function createTransactionRepository(db: ExpenseNoteDB, friends: FriendRepository): TransactionRepository {
   async function withDebts(txs: Transaction[]): Promise<TransactionWithDebts[]> {
     const debts = await db.debts.where('transactionId').anyOf(txs.map((t) => t.id)).filter(isAlive).toArray()
     return txs.map((t) => ({ ...t, debts: debts.filter((d) => d.transactionId === t.id).sort(byCreated) }))
@@ -29,7 +30,7 @@ export function createTransactionRepository(db: ExpenseNoteDB): TransactionRepos
     return { ...rest, note: rest.note.trim() }
   }
 
-  return {
+  const repo: TransactionRepository = {
     async listByMonth(month) {
       const txs = await db.transactions.where('date').between(`${month}-01`, `${month}-31`, true, true).filter(isAlive).toArray()
       return withDebts(txs.sort(newestFirst))
@@ -58,6 +59,19 @@ export function createTransactionRepository(db: ExpenseNoteDB): TransactionRepos
         await db.debts.bulkAdd(input.splits.map((s) => ({ ...newSyncable(), transactionId: tx.id, ...s })))
       })
       return tx.id
+    },
+
+    async createWithFriends(input) {
+      // Validate up front (new friends keyed by name) so nothing is written for invalid input.
+      validate({ ...input, splits: input.splits.map((s) => ({ friendId: s.friendId ?? `new:${normalize(s.friendName)}`, amount: s.amount })) })
+      return db.transaction('rw', db.friends, db.transactions, db.debts, async () => {
+        const splits = []
+        for (const s of input.splits) {
+          const friendId = s.friendId ?? (await friends.findByName(s.friendName))?.id ?? (await friends.create(s.friendName))
+          splits.push({ friendId, amount: s.amount })
+        }
+        return repo.create({ ...input, splits })
+      })
     },
 
     async update(id, input) {
@@ -95,4 +109,5 @@ export function createTransactionRepository(db: ExpenseNoteDB): TransactionRepos
       })
     },
   }
+  return repo
 }

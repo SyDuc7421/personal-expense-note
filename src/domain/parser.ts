@@ -1,4 +1,4 @@
-import { format, isValid, parse as parseDate, subDays } from 'date-fns'
+import { format, isValid, parse as parseDate, subDays, subYears } from 'date-fns'
 import { detectCategory, isCategoryId } from './categories'
 import { computeSplit, SplitError } from './split'
 import { normalize } from './text'
@@ -46,7 +46,7 @@ function parseAmount(token: string): number | null {
   if (m) return Math.round(Number(`${m[1]}.${m[2]}`) * 1_000_000)
   m = /^(\d+(?:[.,]\d+)?)(k|tr)$/.exec(token)
   if (m) return Math.round(Number(m[1].replace(',', '.')) * (m[2] === 'k' ? 1_000 : 1_000_000))
-  if (/^\d{1,3}(\.\d{3})+$/.test(token)) return Number(token.replace(/\./g, ''))
+  if (/^\d{1,3}([.,]\d{3})+$/.test(token)) return Number(token.replace(/[.,]/g, ''))
   if (/^\d+$/.test(token)) {
     const n = Number(token)
     return n < 1000 ? n * 1000 : n
@@ -63,7 +63,7 @@ const mentionKey = (name: string) => normalize(name).replace(/\s/g, '')
 export function parse(input: string, friends: Friend[], today: Date = new Date()): ParseResult | ParseError {
   const tokens = input
     .trim()
-    .split(/\s+/)
+    .split(/\s+|,(?=@)/)
     .map((t) => t.replace(/[,;]+$/, ''))
     .filter(Boolean)
   if (tokens.length === 0) return fail('empty')
@@ -99,8 +99,10 @@ export function parse(input: string, friends: Friend[], today: Date = new Date()
       date = format(subDays(today, 1), 'yyyy-MM-dd')
       i++
     } else if (/^\d{1,2}\/\d{1,2}$/.test(token)) {
-      const d = parseDate(`${token}/${today.getFullYear()}`, 'd/M/yyyy', today)
+      let d = parseDate(`${token}/${today.getFullYear()}`, 'd/M/yyyy', today)
       if (!isValid(d)) return fail('invalidDate')
+      // dd/mm never means the future: 28/12 typed in January is last December.
+      if (d > today) d = subYears(d, 1)
       date = format(d, 'yyyy-MM-dd')
     } else {
       const isIncome = lower.startsWith('+')

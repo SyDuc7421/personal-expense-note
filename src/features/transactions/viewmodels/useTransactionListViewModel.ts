@@ -30,6 +30,8 @@ export interface TransactionDayGroup {
   items: TransactionListItem[]
 }
 
+const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
+
 /** null = closed, 'new' = create form, otherwise the id being edited. */
 export type FormTarget = null | 'new' | string
 
@@ -81,7 +83,7 @@ export function useTransactionListViewModel(
       const d = parseISO(date)
       return {
         date,
-        label: isToday(d) ? t('common.today') : isYesterday(d) ? t('common.yesterday') : format(d, 'EEEE, dd/MM', { locale }),
+        label: isToday(d) ? t('common.today') : isYesterday(d) ? t('common.yesterday') : capitalize(format(d, 'EEEE, dd/MM', { locale })),
         totalLabel: formatVND(dayTxs.reduce((acc, tx) => acc + expenseShare(tx), 0)),
         items: dayTxs.map((tx) => toTransactionListItem(tx, friends.names)),
       }
@@ -95,7 +97,7 @@ export function useTransactionListViewModel(
       isLoading: query.isLoading || friends.isLoading,
       error: query.error,
       month,
-      monthLabel: format(parseISO(`${month}-01`), 'LLLL yyyy', { locale }),
+      monthLabel: capitalize(format(parseISO(`${month}-01`), 'LLLL yyyy', { locale })),
       filters,
       groups,
       categories: CATEGORIES.map((c) => ({ id: c.id, icon: c.icon })),

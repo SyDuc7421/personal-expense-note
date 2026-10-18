@@ -27,6 +27,7 @@ export type SettingsConfirm = null | 'import' | 'clear1' | 'clear2'
 export interface SettingsViewModel {
   state: {
     isLoading: boolean
+    loadError: boolean
     friends: FriendRow[]
     newFriendName: string
     editing: { id: string; name: string } | null
@@ -81,7 +82,9 @@ export function useSettingsViewModel(): SettingsViewModel {
       setError(null)
       return true
     } catch (e) {
-      setError(errorKey(e))
+      const key = errorKey(e)
+      setError(key)
+      toast.error(t(key))
       return false
     }
   }
@@ -95,7 +98,10 @@ export function useSettingsViewModel(): SettingsViewModel {
 
   return {
     state: {
-      isLoading: friends.isLoading || balances.isLoading || lastExport.isLoading || reminder.isLoading,
+      loadError: Boolean(friends.error ?? balances.error ?? lastExport.error),
+      isLoading:
+        !(friends.error ?? balances.error ?? lastExport.error) &&
+        (friends.isLoading || balances.isLoading || lastExport.isLoading || reminder.isLoading),
       friends: rows,
       newFriendName,
       editing,
@@ -139,6 +145,8 @@ export function useSettingsViewModel(): SettingsViewModel {
           } catch {
             throw new DomainError('invalidBackup')
           }
+          // Validate before asking to overwrite everything.
+          repos.backup.validateSnapshot(json)
           setPendingImport(json)
           setConfirm('import')
         })

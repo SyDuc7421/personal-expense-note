@@ -94,3 +94,15 @@ test('editing keeps an archived split friend selectable', async () => {
   await waitFor(() => expect(result.current.state.values.splits).toHaveLength(1))
   await waitFor(() => expect(result.current.state.friends.map((f) => f.name)).toEqual(['Huy', 'Nam']))
 })
+
+test('editing a quick-input transaction keeps its rawInput', async () => {
+  const { repos } = await setup()
+  const id = await repos.transactions.create({
+    type: 'expense', amount: 35000, category: 'anuong', note: 'cafe', date: '2026-10-12', rawInput: 'cafe 35k', splits: [],
+  })
+  const { result } = renderViewModel(() => useTransactionFormViewModel({ id, onDone: () => {} }), repos)
+  await waitFor(() => expect(result.current.state.values.amount).toBe('35000'))
+  act(() => result.current.actions.setField('note', 'cafe sữa'))
+  await act(() => result.current.actions.save())
+  expect((await repos.transactions.get(id))?.rawInput).toBe('cafe 35k')
+})

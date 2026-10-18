@@ -48,3 +48,11 @@ test('ageInDays counts calendar days to today', () => {
 test('friendBalance accepts joined entries without deletedAt', () => {
   expect(friendBalance([{ amount: 150000 }, { amount: 50000 }], [settlement(100000)])).toBe(100000)
 })
+
+test('partial settlement then deleting the oldest debt: age moves to the next debt', () => {
+  // 150k (10/12) + 50k (10/15), settled 100k; then the 10/12 transaction is deleted.
+  const remaining = fifoOutstanding([entries[0]], 100000)
+  expect(remaining).toEqual([])
+  const withNewer = fifoOutstanding([entries[0], { debtId: 'd3', transactionId: 't3', date: '2026-10-16', note: 'x', amount: 80000 }], 100000)
+  expect(withNewer).toEqual([{ debtId: 'd3', transactionId: 't3', date: '2026-10-16', note: 'x', amount: 80000, remaining: 30000 }])
+})

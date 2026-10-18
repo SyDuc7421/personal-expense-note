@@ -30,6 +30,10 @@ describe('amounts', () => {
     ['x 1.250.000', 1250000],
     ['x 35', 35000],
     ['x 2.5k', 2500],
+    ['x 1.500', 1500],
+    ['x 1.500k', 1500],
+    ['x 1,500', 1500],
+    ['x 1,250,000', 1250000],
     ['35k', 35000],
   ])('%s → %i', (input, amount) => {
     expect(ok(input).amount).toBe(amount)
@@ -111,6 +115,12 @@ describe('mentions', () => {
     expect(ok('cafe 70k @anhtu').splits[0].friendId).toBe('anhtu')
   })
 
+  test('comma-separated mentions without spaces', () => {
+    const r = ok('lẩu 600k /4 @Nam,@Huy,@Linh')
+    expect(r.splits.map((s) => s.friendName)).toEqual(['Nam', 'Huy', 'Linh'])
+    expect(r.myShare).toBe(150000)
+  })
+
   test('duplicate mentions collapse', () => {
     const r = ok('cafe 70k @Nam @nam')
     expect(r.splits).toHaveLength(1)
@@ -146,6 +156,9 @@ describe('income, category, date', () => {
     expect(ok('cafe 35k 12/10').date).toBe('2026-10-12')
     expect(ok('cafe 35k 5/1').date).toBe('2026-01-05')
     expect(errorOf('cafe 35k 31/02')).toBe('invalidDate')
+    // A day later than today means last year (e.g. typing 28/12 in January).
+    expect(ok('cafe 35k 28/12').date).toBe('2025-12-28')
+    expect(ok('cafe 35k 18/10').date).toBe('2026-10-18')
   })
 
   test('trailing commas are ignored', () => {

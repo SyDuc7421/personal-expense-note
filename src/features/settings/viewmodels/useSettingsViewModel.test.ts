@@ -2,11 +2,13 @@ import { act } from '@testing-library/react'
 import { createTestRepositories } from '@/data/testing'
 import { downloadJson } from '@/lib/download'
 import { formatVND } from '@/lib/format'
+import { toast } from 'sonner'
 import { i18n } from '@/i18n'
 import { renderViewModel, waitFor } from '@/test/renderViewModel'
 import { useSettingsViewModel } from './useSettingsViewModel'
 
 vi.mock('@/lib/download', () => ({ downloadJson: vi.fn() }))
+vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }))
 
 async function setup() {
   const t = createTestRepositories()
@@ -79,6 +81,13 @@ test('import asks for confirmation then replaces all data', async () => {
   expect((await repos.friends.list()).map((f) => f.name)).toEqual(['Bình'])
 })
 
+test('an invalid backup is rejected before asking to overwrite', async () => {
+  const { view } = await setup()
+  await act(() => view.result.current.actions.importJson(new File([JSON.stringify({ format: 'nope' })], 'b.json')))
+  expect(view.result.current.state.error).toBe('errors.invalidBackup')
+  expect(view.result.current.state.confirm).toBeNull()
+})
+
 test('import of a non-JSON file shows invalidBackup', async () => {
   const { view } = await setup()
   await act(() => view.result.current.actions.importJson(new File(['nope'], 'b.json')))
@@ -116,4 +125,18 @@ test('reminder template: defaults, save, reset', async () => {
   await act(() => vm().actions.resetReminderTemplate())
   expect(await repos.meta.get('reminderTemplate')).toBe('')
   await waitFor(() => expect(vm().state.reminderTemplate).toContain('tổng kết'))
+})
+
+test('load failure is exposed as loadError instead of an endless skeleton', async () => {
+  const t = createTestRepositories()
+  const repos = { ...t.repos, friends: { ...t.repos.friends, list: () => Promise.reject(new Error('boom')) } }
+  const view = renderViewModel(() => useSettingsViewModel(), repos)
+  await waitFor(() => expect(view.result.current.state.loadError).toBe(true))
+})
+
+test('action errors are also toasted so they are visible anywhere on the page', async () => {
+  const { view } = await setup()
+  act(() => view.result.current.actions.setNewFriendName('nam'))
+  await act(() => view.result.current.actions.addFriend())
+  expect(toast.error).toHaveBeenCalledWith('Đã có bạn trùng tên.')
 })

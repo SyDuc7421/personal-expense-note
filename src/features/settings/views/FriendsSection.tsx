@@ -28,6 +28,11 @@ export function FriendsSection({ vm }: { vm: SettingsViewModel }) {
           {t('settings.addFriend')}
         </Button>
       </form>
+      {state.error && (
+        <p role="alert" className="text-sm text-destructive">
+          {t(state.error)}
+        </p>
+      )}
       {state.friends.length === 0 ? (
         <p className="py-2 text-sm text-muted-foreground">{t('settings.noFriends')}</p>
       ) : (

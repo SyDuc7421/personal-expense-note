@@ -2,6 +2,7 @@ import type { Resources } from './en'
 
 export const vi: Resources = {
   app: { name: 'Personal expense note' },
+  a11y: { tabs: 'Điều hướng chính', sort: 'Sắp xếp theo', previousMonth: 'Tháng trước', nextMonth: 'Tháng sau' },
   tabs: { overview: 'Tổng quan', transactions: 'Giao dịch', debts: 'Nợ', settings: 'Cài đặt' },
   common: {
     save: 'Lưu',

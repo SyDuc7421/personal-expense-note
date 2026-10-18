@@ -52,5 +52,6 @@ test('invalid import keeps data', async () => {
   const snapshot = await repos.backup.exportSnapshot()
   expect(await code({ ...snapshot, transactions: [{ id: 'x' }] })).toBe('invalidBackup')
   expect(await code({ ...snapshot, schemaVersion: 99 })).toBe('newerSchema')
+  expect(await code({ ...snapshot, friends: [...snapshot.friends, snapshot.friends[0]] })).toBe('invalidBackup')
   expect(await db.transactions.count()).toBe(2)
 })

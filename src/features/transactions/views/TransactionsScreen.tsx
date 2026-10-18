@@ -29,7 +29,7 @@ export function TransactionsScreen() {
           {state.groups.map((group) => (
             <li key={group.date}>
               <div className="flex items-center justify-between bg-muted/50 px-4 py-1.5 text-sm text-muted-foreground">
-                <span className="capitalize">{group.label}</span>
+                <span>{group.label}</span>
                 <Amount label={t('transactions.dayTotal', { amount: group.totalLabel })} />
               </div>
               <ul className="divide-y">

@@ -41,7 +41,7 @@ export interface QuickInputViewModel {
 
 export function useQuickInputViewModel(opts: { today?: Date } = {}): QuickInputViewModel {
   const { t } = useTranslation()
-  const { friends: friendRepo, transactions } = useRepositories()
+  const { transactions } = useRepositories()
   const friends = useFriends()
   const [text, setText] = useState('')
   const [saveError, setSaveError] = useState<string | null>(null)
@@ -75,19 +75,14 @@ export function useQuickInputViewModel(opts: { today?: Date } = {}): QuickInputV
     const submitted = text
     setIsSaving(true)
     try {
-      const splits = []
-      for (const s of result.splits) {
-        const friendId = s.friendId ?? (await friendRepo.findByName(s.friendName))?.id ?? (await friendRepo.create(s.friendName))
-        splits.push({ friendId, amount: s.amount })
-      }
-      await transactions.create({
+      await transactions.createWithFriends({
         type: result.type,
         amount: result.amount,
         category: result.category,
         note: result.note,
         date: result.date,
         rawInput: submitted.trim(),
-        splits,
+        splits: result.splits,
       })
       // Keep anything typed while saving.
       setText((current) => (current === submitted ? '' : current))

@@ -8,9 +8,10 @@ import { createTransactionRepository } from './transactions'
 
 export function createDexieRepositories(db: ExpenseNoteDB): Repositories {
   const meta = createMetaRepository(db)
+  const friends = createFriendRepository(db)
   return {
-    transactions: createTransactionRepository(db),
-    friends: createFriendRepository(db),
+    transactions: createTransactionRepository(db, friends),
+    friends,
     ledger: createLedgerRepository(db),
     meta,
     backup: createBackupService(db, meta),

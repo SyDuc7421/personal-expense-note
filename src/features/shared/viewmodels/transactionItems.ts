@@ -23,7 +23,7 @@ export function toTransactionListItem(tx: TransactionWithDebts, friendNames: Map
     type: tx.type,
     date: tx.date,
     amountLabel: tx.type === 'income' ? `+${formatVND(tx.amount)}` : formatVND(tx.amount),
-    debtorNames: tx.debts.map((d) => friendNames.get(d.friendId) ?? '?'),
+    debtorNames: tx.debts.map((d) => friendNames.get(d.friendId) ?? '?').sort((a, b) => a.localeCompare(b, 'vi')),
   }
 }
 

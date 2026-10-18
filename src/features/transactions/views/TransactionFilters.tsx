@@ -11,11 +11,11 @@ export function TransactionFilters({ vm }: { vm: TransactionListViewModel }) {
   return (
     <div className="flex flex-col gap-2 border-b px-4 py-3">
       <div className="flex items-center justify-between">
-        <Button variant="ghost" size="icon" aria-label="previous month" onClick={actions.previousMonth}>
+        <Button variant="ghost" size="icon" aria-label={t('a11y.previousMonth')} onClick={actions.previousMonth}>
           <ChevronLeft />
         </Button>
-        <span className="font-medium capitalize">{state.monthLabel}</span>
-        <Button variant="ghost" size="icon" aria-label="next month" onClick={actions.nextMonth}>
+        <span className="font-medium">{state.monthLabel}</span>
+        <Button variant="ghost" size="icon" aria-label={t('a11y.nextMonth')} onClick={actions.nextMonth}>
           <ChevronRight />
         </Button>
       </div>

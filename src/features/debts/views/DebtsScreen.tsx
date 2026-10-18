@@ -34,7 +34,7 @@ export function DebtsScreen() {
         <EmptyState title={t('debts.empty')} hint={t('debts.emptyHint')} />
       ) : (
         <>
-          <div className="flex gap-2 px-4 pb-2" role="radiogroup" aria-label="sort">
+          <div className="flex gap-2 px-4 pb-2" role="radiogroup" aria-label={t('a11y.sort')}>
             {(['age', 'amount'] as const).map((s) => (
               <Button
                 key={s}

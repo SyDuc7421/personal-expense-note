@@ -74,6 +74,8 @@ export function useTransactionFormViewModel({ id, onDone }: { id?: string; onDon
   const [errors, setErrors] = useState<TransactionFormErrors>({})
   const [isSaving, setIsSaving] = useState(false)
   const [confirmingDelete, setConfirmingDelete] = useState(false)
+  /** Original quick-input line of the edited transaction; kept across edits. */
+  const [rawInput, setRawInput] = useState<string | undefined>(undefined)
 
   useEffect(() => {
     if (!id) return
@@ -82,6 +84,7 @@ export function useTransactionFormViewModel({ id, onDone }: { id?: string; onDon
       (tx) => {
         if (cancelled) return
         if (tx) {
+          setRawInput(tx.rawInput)
           setValues({
             type: tx.type,
             amount: String(tx.amount),
@@ -126,6 +129,7 @@ export function useTransactionFormViewModel({ id, onDone }: { id?: string; onDon
       category: values.category,
       note: values.note,
       date: values.date,
+      rawInput,
       splits: values.type === 'income' ? [] : values.splits.map((s) => ({ friendId: s.friendId, amount: parseAmountInput(s.amount) })),
     }
     setIsSaving(true)

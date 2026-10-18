@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { ConfirmDrawer } from '@/components/ConfirmDrawer'
+import { ErrorState } from '@/components/ErrorState'
 import { ListSkeleton } from '@/components/ListSkeleton'
 import { Button } from '@/components/ui/button'
 import { useSettingsViewModel } from '../viewmodels/useSettingsViewModel'
@@ -21,15 +22,11 @@ export function SettingsScreen() {
   const { state, actions } = vm
   const copy = state.confirm ? CONFIRM_COPY[state.confirm] : null
 
+  if (state.loadError) return <ErrorState message={t('common.loadError')} />
   if (state.isLoading) return <ListSkeleton />
 
   return (
     <div className="divide-y">
-      {state.error && (
-        <p role="alert" className="px-4 py-3 text-sm text-destructive">
-          {t(state.error)}
-        </p>
-      )}
       <FriendsSection vm={vm} />
       <BackupSection vm={vm} />
       <ReminderSection vm={vm} />

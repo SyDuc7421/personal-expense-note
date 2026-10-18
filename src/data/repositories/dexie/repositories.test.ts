@@ -87,12 +87,27 @@ describe('transactions', () => {
   })
 })
 
+test('createWithFriends creates new friends and the transaction atomically', async () => {
+  const { db, repos, nam } = await setup()
+  const id = await repos.transactions.createWithFriends({
+    ...lau([]),
+    splits: [{ friendId: nam, friendName: 'Nam', amount: 150000 }, { friendName: 'Linh', amount: 150000 }],
+  })
+  expect((await repos.transactions.get(id))?.debts).toHaveLength(2)
+  expect((await repos.friends.findByName('linh'))).toBeDefined()
+
+  const before = await db.friends.count()
+  expect(await codeOf(repos.transactions.createWithFriends({ ...lau([]), amount: 1000, splits: [{ friendName: 'Minh', amount: 5000 }] }))).toBe('splitsExceedAmount')
+  expect(await db.friends.count()).toBe(before)
+})
+
 describe('friends', () => {
   test('names are unique ignoring case and diacritics', async () => {
     const { repos, huy } = await setup()
     expect(await codeOf(repos.friends.create('nam'))).toBe('duplicateName')
     expect(await codeOf(repos.friends.create('  '))).toBe('emptyName')
     expect(await codeOf(repos.friends.rename(huy, 'NAM'))).toBe('duplicateName')
+    expect(await codeOf(repos.friends.rename(huy, 'nám'))).toBe('duplicateName')
     await repos.friends.rename(huy, 'Huy Trần')
     expect((await repos.friends.findByName('huy tran'))?.id).toBe(huy)
   })

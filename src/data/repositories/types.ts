@@ -1,6 +1,10 @@
 import type { Snapshot } from '@/domain/snapshot'
 import type { DebtEntry, Friend, NewTransaction, Settlement, TransactionWithDebts } from '@/domain/types'
 
+export type NewTransactionWithFriendNames = Omit<NewTransaction, 'splits'> & {
+  splits: { friendId?: string; friendName: string; amount: number }[]
+}
+
 export interface TransactionRepository {
   /** month = YYYY-MM; newest first. */
   listByMonth(month: string): Promise<TransactionWithDebts[]>
@@ -10,6 +14,8 @@ export interface TransactionRepository {
   /** Transaction + debts in one Dexie transaction. */
   create(input: NewTransaction): Promise<string>
   update(id: string, input: NewTransaction): Promise<void>
+  /** Like create, but splits may name friends that do not exist yet; they are created in the same Dexie transaction. */
+  createWithFriends(input: NewTransactionWithFriendNames): Promise<string>
   /** Soft deletes the transaction and its debts. */
   remove(id: string): Promise<void>
 }
@@ -43,6 +49,8 @@ export interface MetaRepository {
 export interface BackupService {
   /** Full snapshot including tombstones. */
   exportSnapshot(): Promise<Snapshot>
+  /** Throws DomainError invalidBackup/newerSchema when `json` is not an importable snapshot. */
+  validateSnapshot(json: unknown): Snapshot
   /** Validates, then replaces all synced data in one Dexie transaction. */
   importSnapshot(json: unknown): Promise<void>
   /** Deletes all synced data and lastExportAt. */

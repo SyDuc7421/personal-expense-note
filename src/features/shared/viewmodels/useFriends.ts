@@ -16,9 +16,10 @@ export function useFriends() {
     const all: Friend[] = query.data ?? []
     return {
       isLoading: query.isLoading,
+      error: query.error,
       all,
       names: new Map(all.map((f) => [f.id, f.name])),
       options: all.filter((f) => !f.archived).map((f): FriendOption => ({ id: f.id, name: f.name })),
     }
-  }, [query.data, query.isLoading])
+  }, [query.data, query.isLoading, query.error])
 }

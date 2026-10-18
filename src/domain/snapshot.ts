@@ -28,7 +28,10 @@ export const transactionSchema = z.object({
 export const debtSchema = z.object({ ...syncable, transactionId: z.string(), friendId: z.string(), amount })
 export const settlementSchema = z.object({ ...syncable, friendId: z.string(), amount, date: isoDate, note: z.string() })
 
-export const snapshotSchema = z.object({
+const uniqueIds = (items: { id: string }[]) => new Set(items.map((i) => i.id)).size === items.length
+
+export const snapshotSchema = z
+  .object({
   format: z.literal(SNAPSHOT_FORMAT),
   schemaVersion: z.number().int().positive(),
   updatedAt: z.string(),
@@ -38,5 +41,9 @@ export const snapshotSchema = z.object({
   debts: z.array(debtSchema),
   settlements: z.array(settlementSchema),
 })
+  .refine(
+    (s) => uniqueIds(s.friends) && uniqueIds(s.transactions) && uniqueIds(s.debts) && uniqueIds(s.settlements),
+    { message: 'duplicate ids' },
+  )
 
 export type Snapshot = z.infer<typeof snapshotSchema>
