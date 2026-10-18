@@ -20,7 +20,6 @@ export function QuickInput() {
         <Input
           aria-label={t('overview.quickInputLabel')}
           placeholder={t('overview.quickInputPlaceholder')}
-          autoFocus
           autoComplete="off"
           autoCorrect="off"
           autoCapitalize="off"

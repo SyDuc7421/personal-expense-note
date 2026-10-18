@@ -17,7 +17,7 @@ export function CategoryDonut({ slices }: { slices: DonutSlice[] }) {
         <div className="flex items-center gap-4">
           <div className="size-36 shrink-0" role="img" aria-label={t('overview.byCategory')}>
             <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
+              <PieChart accessibilityLayer={false}>
                 <Pie
                   data={slices}
                   dataKey="value"
