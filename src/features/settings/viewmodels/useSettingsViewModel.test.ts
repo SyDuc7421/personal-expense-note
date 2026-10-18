@@ -50,19 +50,6 @@ test('a settled friend with history cannot be deleted (archive only)', async () 
   expect(view.result.current.state.friends.find((f) => f.id === nam)?.canDelete).toBe(false)
 })
 
-test('friend rows start collapsed; toggling opens one row at a time', async () => {
-  const { view, nam } = await setup()
-  const vm = () => view.result.current
-  expect(vm().state.expandedFriendId).toBeNull()
-  act(() => vm().actions.toggleFriend(nam))
-  expect(vm().state.expandedFriendId).toBe(nam)
-  const huy = vm().state.friends.find((f) => f.name === 'Huy')!.id
-  act(() => vm().actions.toggleFriend(huy))
-  expect(vm().state.expandedFriendId).toBe(huy)
-  act(() => vm().actions.toggleFriend(huy))
-  expect(vm().state.expandedFriendId).toBeNull()
-})
-
 test('rename and archive', async () => {
   const { view, repos, nam } = await setup()
   const vm = () => view.result.current

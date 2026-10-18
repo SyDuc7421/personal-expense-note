@@ -45,8 +45,6 @@ export interface SettingsViewModel {
     friends: FriendRow[]
     newFriendName: string
     editing: { id: string; name: string } | null
-    /** Friend row whose actions are shown; rows start collapsed. */
-    expandedFriendId: string | null
     /** i18n key */
     error: string | null
     confirm: SettingsConfirm
@@ -60,7 +58,6 @@ export interface SettingsViewModel {
   }
   actions: {
     setNewFriendName(name: string): void
-    toggleFriend(id: string): void
     addFriend(): Promise<void>
     startEdit(id: string): void
     setEditName(name: string): void
@@ -96,7 +93,6 @@ export function useSettingsViewModel(): SettingsViewModel {
   const lastExport = useRepoQuery(() => repos.meta.get(LAST_EXPORT_KEY), [repos.meta])
   const [newFriendName, setNewFriendName] = useState('')
   const [editing, setEditing] = useState<{ id: string; name: string } | null>(null)
-  const [expandedFriendId, setExpandedFriendId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [confirm, setConfirm] = useState<SettingsConfirm>(null)
   const [pendingImport, setPendingImport] = useState<unknown>(null)
@@ -157,7 +153,6 @@ export function useSettingsViewModel(): SettingsViewModel {
       friends: rows,
       newFriendName,
       editing,
-      expandedFriendId,
       error,
       confirm,
       lastExportLabel: lastExport.data ? format(parseISO(lastExport.data), 'dd/MM/yyyy HH:mm') : null,
@@ -177,7 +172,6 @@ export function useSettingsViewModel(): SettingsViewModel {
     },
     actions: {
       setNewFriendName,
-      toggleFriend: (id) => setExpandedFriendId((current) => (current === id ? null : id)),
       async addFriend() {
         if (await attempt(() => repos.friends.create(newFriendName))) setNewFriendName('')
       },
