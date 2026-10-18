@@ -10,7 +10,7 @@
 - 100% dùng được offline. Có mạng thì tự đồng bộ và backup lên Vercel (Vercel Functions + Vercel Blob), không cần VPS.
 
 ### Non-goals (không làm ở MVP)
-- Không có hệ thống account/đăng ký. App chỉ cho **một người dùng**, nhiều thiết bị, xác thực bằng một sync secret.
+- Không có hệ thống account/đăng ký. Mỗi người dùng có một **mã đồng bộ** (sync secret) do app sinh ngẫu nhiên; mỗi mã là một kho dữ liệu riêng trên server, dùng chung cho mọi thiết bị của người đó.
 - Không sync realtime. Sync theo sự kiện (mở app, sau khi ghi, bấm tay), xem mục 9.
 - Không multi-currency (chỉ VND).
 - Không kết nối ngân hàng.
@@ -253,7 +253,7 @@ Bottom tab bar gồm 4 tab: **Tổng quan · Giao dịch · Nợ · Cài đặt*
 
 ### 9.1 Tổng quan
 - **Nguồn dữ liệu làm việc luôn là IndexedDB trên máy.** App không bao giờ chờ server để hiển thị hay ghi.
-- Server chỉ giữ **một file** `snapshot.json` trong Vercel Blob **private store**: toàn bộ friends, transactions, debts, settlements (gồm cả tombstone).
+- Server giữ **một file mỗi mã đồng bộ**, `snapshots/<sha256(secret)>.json` trong Vercel Blob **private store**: toàn bộ friends, transactions, debts, settlements (gồm cả tombstone).
 - Sync = tải snapshot về → **merge theo từng record** với local → ghi kết quả vào local → upload snapshot đã merge, dùng ETag để không ghi đè thay đổi của thiết bị khác.
 - Snapshot đồng thời là bản backup trên server. Export/Import JSON thủ công (mục 7.4) vẫn giữ, dùng cùng format.
 
@@ -292,7 +292,7 @@ Yêu cầu:
 | `GET /api/snapshot` | Trả về snapshot + header `ETag`. Chưa có thì `404`. Đọc với `useCache: false` để luôn lấy bản mới nhất. |
 | `PUT /api/snapshot` | Body là snapshot. Header `If-Match: <etag>` (hoặc `If-None-Match: *` khi tạo lần đầu). Ghi bằng `put(..., { access: 'private', allowOverwrite: true, ifMatch })`. ETag không khớp → `412`. Thành công → trả ETag mới. |
 
-- **Auth**: header `Authorization: Bearer <SYNC_SECRET>`. `SYNC_SECRET` là env var trên Vercel (chuỗi ngẫu nhiên ≥ 32 ký tự). So sánh bằng `crypto.timingSafeEqual`. Sai thì `401`.
+- **Auth / kho dữ liệu**: header `Authorization: Bearer <secret>`. Secret do client sinh: 32 byte ngẫu nhiên, base64url (43 ký tự). Server chỉ nhận secret khớp `^[A-Za-z0-9_-]{43}$`, sai định dạng thì `401`. Pathname blob = `snapshots/<sha256 hex của secret>.json`, nên server không lưu secret và không có env `SYNC_SECRET`. Không có cách khôi phục khi mất mã.
 - Validate body (zod): đúng `format`, `schemaVersion`, kích thước < 5 MB.
 - Không log nội dung snapshot.
 - Token Vercel Blob chỉ nằm ở server (env), **không bao giờ** ra client.
@@ -319,8 +319,8 @@ sync():
 Hai thiết bị cùng tạo "Nam" offline sẽ ra hai friend khác id. Sau sync, nếu có ≥ 2 friend chưa xóa có tên trùng nhau (so sánh không phân biệt hoa thường, không dấu), hiện banner "Có bạn bè bị trùng tên" kèm action **Gộp**: chuyển mọi debt/settlement sang friend cũ hơn (theo `createdAt`), soft delete friend còn lại.
 
 ### 9.7 UI sync
-- Cài đặt → mục **Đồng bộ**: nhập sync secret (lưu trong `meta`, không đồng bộ), trạng thái (Đã đồng bộ lúc HH:mm / Đang đồng bộ / Offline / Lỗi), nút "Đồng bộ ngay".
-- Thiết bị mới: nhập secret → sync lần đầu kéo toàn bộ dữ liệu về.
+- Cài đặt → mục **Đồng bộ**: nút "Tạo mã mới" (tạo kho mới) hoặc dán mã từ thiết bị khác (lưu trong `meta`, không đồng bộ); hiện/ẩn và copy mã đang dùng kèm cảnh báo "mất mã là mất bản sao trên server"; trạng thái (Đã đồng bộ lúc HH:mm / Đang đồng bộ / Offline / Lỗi), nút "Đồng bộ ngay", nút "Tắt đồng bộ".
+- Thiết bị mới: dán mã → server phải đã có kho cho mã đó (`404` thì báo "Mã không tồn tại", không lưu mã) → sync lần đầu kéo toàn bộ dữ liệu về.
 - Header có indicator nhỏ: chấm xanh (đã sync), xám (offline), cam (có thay đổi chưa sync).
 - Banner nhắc backup (mục 8) **chỉ hiện khi chưa bật sync**.
 
@@ -502,7 +502,7 @@ Dùng ESLint `no-restricted-imports` để chặn vi phạm tầng:
 
 **Phase 4: Đồng bộ**
 - [ ] `domain/sync/merge.ts` + integrity + test (gồm property-based)
-- [ ] `api/snapshot.ts` + Vercel Blob private store + `SYNC_SECRET`
+- [ ] `api/snapshot.ts` + Vercel Blob private store, mỗi mã đồng bộ một kho
 - [ ] `SyncService` + trigger + mutex + test mô phỏng 2 thiết bị
 - [ ] UI đồng bộ trong Cài đặt, sync indicator, gộp friend trùng tên
 - [ ] Dọn tombstone
