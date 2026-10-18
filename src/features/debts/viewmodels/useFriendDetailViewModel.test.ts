@@ -61,3 +61,22 @@ test('unknown friend is notFound', async () => {
   await waitFor(() => expect(result.current.state.isLoading).toBe(false))
   expect(result.current.state.notFound).toBe(true)
 })
+
+test('remind copies the FIFO-unpaid items using the saved template', async () => {
+  const writeText = vi.fn().mockResolvedValue(undefined)
+  Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true })
+  const { view, repos, nam } = await seed()
+  await repos.ledger.addSettlement({ friendId: nam, amount: 150000, date: '2026-10-16', note: '' })
+  await repos.meta.set('reminderTemplate', '{name}|{items}|{total}')
+  await waitFor(() => expect(view.result.current.state.balance).toBe(50000))
+  await act(() => view.result.current.actions.remind())
+  expect(writeText).toHaveBeenCalledWith('Nam|• 15/10 – Grab: 50.000đ|50.000đ')
+})
+
+test('remind falls back to the default template', async () => {
+  const writeText = vi.fn().mockResolvedValue(undefined)
+  Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true })
+  const { view } = await seed()
+  await act(() => view.result.current.actions.remind())
+  expect(writeText.mock.calls[0][0]).toMatch(/^Ê Nam, tổng kết tí nha 😄\n• 12\/10 – Lẩu: 150.000đ\n• 15\/10 – Grab: 50.000đ\nTổng: 200.000đ/)
+})

@@ -6,6 +6,7 @@ import { useSettingsViewModel } from '../viewmodels/useSettingsViewModel'
 import { BackupSection } from './BackupSection'
 import { FriendsSection } from './FriendsSection'
 import { LanguageSection } from './LanguageSection'
+import { ReminderSection } from './ReminderSection'
 import { Section } from './Section'
 
 const CONFIRM_COPY = {
@@ -31,6 +32,7 @@ export function SettingsScreen() {
       )}
       <FriendsSection vm={vm} />
       <BackupSection vm={vm} />
+      <ReminderSection vm={vm} />
       <LanguageSection vm={vm} />
       <Section title={t('settings.danger')}>
         <Button variant="destructive" onClick={actions.askClear}>

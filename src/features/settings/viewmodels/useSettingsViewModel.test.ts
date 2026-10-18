@@ -98,3 +98,15 @@ test('setLanguage switches i18n and persists to meta', async () => {
   expect(await repos.meta.get('language')).toBe('en')
   await act(() => view.result.current.actions.setLanguage('vi'))
 })
+
+test('reminder template: defaults, save, reset', async () => {
+  const { view, repos } = await setup()
+  const vm = () => view.result.current
+  expect(vm().state.reminderTemplate).toContain('{name}')
+  act(() => vm().actions.setReminderTemplate('Hi {name}: {total}'))
+  await act(() => vm().actions.saveReminderTemplate())
+  expect(await repos.meta.get('reminderTemplate')).toBe('Hi {name}: {total}')
+  await act(() => vm().actions.resetReminderTemplate())
+  expect(await repos.meta.get('reminderTemplate')).toBe('')
+  await waitFor(() => expect(vm().state.reminderTemplate).toContain('tổng kết'))
+})

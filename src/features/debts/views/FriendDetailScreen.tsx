@@ -1,4 +1,4 @@
-import { ChevronLeft } from 'lucide-react'
+import { ChevronLeft, Send } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useParams } from 'react-router'
 import { Amount } from '@/components/Amount'
@@ -55,6 +55,9 @@ function FriendDetail({ friendId }: { friendId: string }) {
 
       <div className="fixed inset-x-0 bottom-[calc(3.5rem+env(safe-area-inset-bottom))] z-30 border-t bg-background/95 backdrop-blur">
         <div className="mx-auto flex max-w-md gap-2 p-3">
+          <Button variant="outline" className="flex-1" onClick={() => void actions.remind()} disabled={state.outstanding.length === 0}>
+            <Send /> {t('debts.remind')}
+          </Button>
           <Button className="flex-1" onClick={actions.openSettle} disabled={state.balance <= 0}>
             {t('debts.settle')}
           </Button>

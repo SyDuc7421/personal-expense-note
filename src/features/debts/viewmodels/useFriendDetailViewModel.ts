@@ -1,11 +1,16 @@
 import { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router'
+import { toast } from 'sonner'
 import { useRepositories } from '@/data/RepositoryProvider'
 import { fifoOutstanding } from '@/domain/balance'
+import { buildReminder } from '@/domain/reminder'
 import { parseAmountInput } from '@/lib/amountInput'
 import { formatShortDate, formatVND, todayISO } from '@/lib/format'
+import { shareText } from '@/lib/share'
 import { errorKey } from '@/features/shared/viewmodels/errors'
 import { useBalances } from '@/features/shared/viewmodels/useBalances'
+import { useReminderTemplate } from '@/features/shared/viewmodels/useReminderTemplate'
 import { useRepoQuery } from '@/features/shared/viewmodels/useRepoQuery'
 
 export interface TimelineEntry {
@@ -42,11 +47,15 @@ export interface FriendDetailViewModel {
     setSettleAmount(amount: string): void
     confirmSettle(): Promise<void>
     closeSettle(): void
+    /** Shares (or copies) a gentle reminder listing the unpaid debts. */
+    remind(): Promise<void>
   }
 }
 
 export function useFriendDetailViewModel(friendId: string, opts: { today?: Date } = {}): FriendDetailViewModel {
+  const { t } = useTranslation()
   const { friends, ledger } = useRepositories()
+  const reminder = useReminderTemplate()
   const navigate = useNavigate()
   const friend = useRepoQuery(async () => (await friends.get(friendId)) ?? null, [friends, friendId])
   const balances = useBalances(friendId)
@@ -78,7 +87,7 @@ export function useFriendDetailViewModel(friendId: string, opts: { today?: Date 
 
   return {
     state: {
-      isLoading: friend.isLoading || balances.isLoading,
+      isLoading: friend.isLoading || balances.isLoading || reminder.isLoading,
       notFound: !friend.isLoading && !friend.data,
       error: friend.error ?? balances.error,
       name: friend.data?.name ?? '',
@@ -93,6 +102,14 @@ export function useFriendDetailViewModel(friendId: string, opts: { today?: Date 
       openSettle: () => setSettle({ open: true, amount: balance > 0 ? String(balance) : '', error: null, isSaving: false }),
       setSettleAmount: (amount) => setSettle((s) => ({ ...s, amount, error: null })),
       closeSettle: () => setSettle((s) => ({ ...s, open: false })),
+      async remind() {
+        const text = buildReminder(reminder.template, friend.data?.name ?? '', outstanding)
+        try {
+          if ((await shareText(text)) === 'copied') toast.success(t('debts.reminderCopied'))
+        } catch {
+          toast.error(t('errors.unknown'))
+        }
+      },
       async confirmSettle() {
         const amount = parseAmountInput(settle.amount)
         if (!(amount > 0)) return setSettle((s) => ({ ...s, error: 'errors.invalidAmount' }))

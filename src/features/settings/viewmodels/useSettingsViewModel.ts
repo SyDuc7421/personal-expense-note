@@ -11,6 +11,7 @@ import { formatVND, todayISO } from '@/lib/format'
 import { errorKey } from '@/features/shared/viewmodels/errors'
 import { useBalances } from '@/features/shared/viewmodels/useBalances'
 import { useFriends } from '@/features/shared/viewmodels/useFriends'
+import { REMINDER_TEMPLATE_KEY, useReminderTemplate } from '@/features/shared/viewmodels/useReminderTemplate'
 import { useRepoQuery } from '@/features/shared/viewmodels/useRepoQuery'
 
 export interface FriendRow {
@@ -35,6 +36,7 @@ export interface SettingsViewModel {
     lastExportLabel: string | null
     language: Language
     languages: Language[]
+    reminderTemplate: string
   }
   actions: {
     setNewFriendName(name: string): void
@@ -51,6 +53,9 @@ export interface SettingsViewModel {
     confirm(): Promise<void>
     cancelConfirm(): void
     setLanguage(language: Language): Promise<void>
+    setReminderTemplate(template: string): void
+    saveReminderTemplate(): Promise<void>
+    resetReminderTemplate(): Promise<void>
   }
 }
 
@@ -65,6 +70,8 @@ export function useSettingsViewModel(): SettingsViewModel {
   const [error, setError] = useState<string | null>(null)
   const [confirm, setConfirm] = useState<SettingsConfirm>(null)
   const [pendingImport, setPendingImport] = useState<unknown>(null)
+  const reminder = useReminderTemplate()
+  const [templateDraft, setTemplateDraft] = useState<string | null>(null)
 
   /** Runs an action; maps failures to `error`. Returns true on success. */
   async function attempt(fn: () => Promise<unknown>): Promise<boolean> {
@@ -85,7 +92,7 @@ export function useSettingsViewModel(): SettingsViewModel {
 
   return {
     state: {
-      isLoading: friends.isLoading || balances.isLoading || lastExport.isLoading,
+      isLoading: friends.isLoading || balances.isLoading || lastExport.isLoading || reminder.isLoading,
       friends: rows,
       newFriendName,
       editing,
@@ -94,6 +101,7 @@ export function useSettingsViewModel(): SettingsViewModel {
       lastExportLabel: lastExport.data ? format(parseISO(lastExport.data), 'dd/MM/yyyy HH:mm') : null,
       language: i18n.language === 'en' ? 'en' : 'vi',
       languages: LANGUAGES,
+      reminderTemplate: templateDraft ?? reminder.template,
     },
     actions: {
       setNewFriendName,
@@ -153,6 +161,17 @@ export function useSettingsViewModel(): SettingsViewModel {
       cancelConfirm() {
         setConfirm(null)
         setPendingImport(null)
+      },
+      setReminderTemplate: setTemplateDraft,
+      async saveReminderTemplate() {
+        const value = templateDraft ?? reminder.template
+        if (await attempt(() => repos.meta.set(REMINDER_TEMPLATE_KEY, value))) {
+          setTemplateDraft(null)
+          toast.success(t('settings.templateSaved'))
+        }
+      },
+      async resetReminderTemplate() {
+        if (await attempt(() => repos.meta.set(REMINDER_TEMPLATE_KEY, ''))) setTemplateDraft(null)
       },
       async setLanguage(language) {
         await attempt(async () => {
