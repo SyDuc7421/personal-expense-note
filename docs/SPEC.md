@@ -332,6 +332,16 @@ Record có `deletedAt` cũ hơn **180 ngày** được xóa thật khỏi local 
 - Integration: `SyncService` với fake API trong memory, mô phỏng 2 thiết bị: cùng offline ghi, sync lần lượt, kết quả hai bên giống nhau; mô phỏng `412` rồi retry thành công; xóa trên máy A và sửa trên máy B (bên có `updatedAt` mới hơn thắng).
 - API: test handler với Blob mock: thiếu/sai secret → 401, sai ETag → 412.
 
+### 9.10 Mã hóa snapshot phía client (chưa làm)
+- **Hiện tại**: lộ Blob store không suy ngược được secret (pathname là SHA-256 của 32 byte ngẫu nhiên), nhưng snapshot lưu JSON **chưa mã hóa**, nên đọc được toàn bộ giao dịch, tên bạn bè, khoản nợ. Lộ `BLOB_READ_WRITE_TOKEN` thì còn ghi đè/xóa được snapshot.
+- **Hướng làm**: client mã hóa snapshot bằng AES-GCM trước khi `PUT`, khóa dẫn xuất từ secret qua HKDF (tách khỏi giá trị dùng làm auth/pathname). Server chỉ giữ ciphertext.
+- **Đánh đổi**: server không validate nội dung bằng `snapshotSchema` được nữa, chỉ check envelope (format, kích thước); cần bump `schemaVersion` và migrate snapshot cũ khi thiết bị sync lần đầu sau update.
+
+### 9.11 Dọn blob trên server (chưa làm)
+- **Hiện tại**: "Tắt đồng bộ" chỉ xóa secret và trạng thái sync ở máy đó; API không có `DELETE`, nên blob `snapshots/<hash>.json` nằm lại Vercel mãi. Không tự xóa khi tắt vì mã dùng chung nhiều thiết bị (máy B sẽ mất kho, lần sync sau `404` rồi tạo lại từ local).
+- **Xóa chủ động**: thêm `DELETE /api/snapshot` (cùng auth Bearer). Dialog "Tắt đồng bộ" có tùy chọn "Xóa luôn dữ liệu trên server (mọi thiết bị dùng mã này sẽ mất kho)", mặc định không chọn.
+- **Dọn theo thời gian**: Vercel Cron định kỳ xóa blob có `uploadedAt` cũ hơn **180 ngày** (cùng ngưỡng 9.8), xử lý blob mồ côi khi mất mã. Endpoint cron bảo vệ bằng `CRON_SECRET`.
+
 ## 10. Mobile-first UI (BẮT BUỘC)
 
 App chỉ dùng trên iPhone. Mọi màn hình **thiết kế, implement và test ở viewport mobile trước**; desktop chỉ cần không vỡ (căn giữa, `max-w-md`).
@@ -511,6 +521,8 @@ Dùng ESLint `no-restricted-imports` để chặn vi phạm tầng:
 - [ ] Budget theo category + cảnh báo
 - [ ] Giao dịch định kỳ (tiền nhà, subscription)
 - [ ] Ghi nhận "bạn trả hộ mình" (Debt chiều ngược lại)
+- [ ] Mã hóa snapshot phía client (mục 9.10)
+- [ ] Dọn blob trên server: `DELETE` khi tắt sync + cron xóa blob cũ (mục 9.11)
 `
 ## 13. Acceptance criteria (MVP)
 
