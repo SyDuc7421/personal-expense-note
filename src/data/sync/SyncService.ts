@@ -155,6 +155,7 @@ export function createSyncService(
       if (e instanceof Stop) return setStatus(e.status)
       if (e instanceof SyncApiError) {
         if (e.kind === 'unauthorized') return setStatus({ phase: 'error', error: 'unauthorized' })
+        if (e.kind === 'tooLarge') return setStatus({ phase: 'error', error: 'tooLarge' })
         if (e.kind === 'network') return setStatus({ phase: 'offline' })
       }
       setStatus({ phase: 'error', error: 'failed' })

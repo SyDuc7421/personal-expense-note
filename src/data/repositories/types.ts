@@ -59,7 +59,7 @@ export interface BackupService {
   clearAll(): Promise<void>
 }
 
-export type SyncError = 'unauthorized' | 'conflict' | 'newerSchema' | 'invalidRemote' | 'failed'
+export type SyncError = 'unauthorized' | 'conflict' | 'newerSchema' | 'invalidRemote' | 'tooLarge' | 'failed'
 
 export type SyncStatus = { phase: 'disabled' | 'idle' | 'syncing' | 'offline' } | { phase: 'error'; error: SyncError }
 

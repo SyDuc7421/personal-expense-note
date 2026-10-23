@@ -9,6 +9,8 @@ export type DomainErrorCode =
   | 'nonZeroBalance'
   | 'friendHasHistory'
   | 'invalidBackup'
+  | 'backupTooLarge'
+  | 'backupTooLargeForSync'
   | 'newerSchema'
   | 'invalidDebtSelection'
   | 'syncCodeNotFound'

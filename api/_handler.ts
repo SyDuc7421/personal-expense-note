@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto'
-import { SCHEMA_VERSION, snapshotSchema } from '../src/domain/snapshot.js'
+import { MAX_SNAPSHOT_BYTES, SCHEMA_VERSION, snapshotSchema } from '../src/domain/snapshot.js'
 
 export interface SnapshotStore {
   read(pathname: string): Promise<{ body: string; etag: string } | null>
@@ -7,8 +7,7 @@ export interface SnapshotStore {
   write(pathname: string, body: string, ifMatch: string | null): Promise<{ etag: string } | null>
 }
 
-/** Below the 4.5 MB request body cap of Vercel Functions, so the client sees our 413 and not a platform error. */
-export const MAX_SNAPSHOT_BYTES = 4 * 1024 * 1024
+export { MAX_SNAPSHOT_BYTES }
 /** 32 random bytes, base64url without padding. Generated on the client. */
 export const SECRET_PATTERN = /^[A-Za-z0-9_-]{43}$/
 

@@ -1,4 +1,4 @@
-import type { Snapshot } from '@/domain/snapshot'
+import { MAX_SNAPSHOT_BYTES, type Snapshot } from '@/domain/snapshot'
 import { isSyncSecret } from '@/domain/sync/secret'
 import { SyncApiError, type SyncApi } from './api'
 
@@ -6,6 +6,8 @@ export interface MemorySyncApi extends SyncApi {
   snapshots: Map<string, Snapshot>
   /** Number of get/put calls. */
   calls: number
+  /** Puts with a larger JSON body answer 413. */
+  maxBytes: number
   /** Next N puts answer 412. */
   conflictsLeft: number
   /** Awaited before a get answers / a put is applied. */
@@ -33,6 +35,7 @@ export function createMemorySyncApi(): MemorySyncApi {
   const api: MemorySyncApi = {
     snapshots: new Map(),
     calls: 0,
+    maxBytes: MAX_SNAPSHOT_BYTES,
     conflictsLeft: 0,
     pendingGets: 0,
     pendingPuts: 0,
@@ -57,6 +60,7 @@ export function createMemorySyncApi(): MemorySyncApi {
 
     async put(secret, snapshot, etag) {
       check(secret)
+      if (new TextEncoder().encode(JSON.stringify(snapshot)).length > api.maxBytes) throw new SyncApiError('tooLarge')
       api.pendingPuts++
       try {
         await api.beforePut?.()

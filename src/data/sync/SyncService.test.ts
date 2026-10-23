@@ -172,6 +172,16 @@ test('server 401 → error unauthorized', async () => {
   expect(a.repos.sync.getStatus()).toEqual({ phase: 'error', error: 'unauthorized' })
 })
 
+test('server 413 → error tooLarge', async () => {
+  const api = createMemorySyncApi()
+  const a = device(api)
+  await a.repos.sync.createSecret()
+  api.maxBytes = 10
+  await a.repos.transactions.create(expense('cafe'))
+  await a.repos.sync.sync()
+  expect(a.repos.sync.getStatus()).toEqual({ phase: 'error', error: 'tooLarge' })
+})
+
 test('remote schemaVersion 2 → error newerSchema, nothing uploaded', async () => {
   const api = createMemorySyncApi()
   const a = device(api)

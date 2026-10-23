@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { useRepositories } from '@/data/RepositoryProvider'
 import { DomainError } from '@/domain/errors'
+import { MAX_BACKUP_BYTES, MAX_SNAPSHOT_BYTES } from '@/domain/snapshot'
 import type { Language } from '@/domain/types'
 import { changeLanguage, LANGUAGES } from '@/i18n'
 import { formatVND } from '@/lib/format'
@@ -203,6 +204,9 @@ export function useSettingsViewModel(): SettingsViewModel {
       },
       async importJson(file) {
         await attempt(async () => {
+          if (file.size > MAX_BACKUP_BYTES) throw new DomainError('backupTooLarge')
+          // With sync on the restore is uploaded next, and the server refuses it above this size.
+          if (sync.code !== null && file.size > MAX_SNAPSHOT_BYTES) throw new DomainError('backupTooLargeForSync')
           let json: unknown
           try {
             json = JSON.parse(await file.text())

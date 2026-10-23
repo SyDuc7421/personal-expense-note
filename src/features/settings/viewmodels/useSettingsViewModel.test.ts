@@ -1,5 +1,6 @@
 import { act } from '@testing-library/react'
 import { createTestRepositories } from '@/data/testing'
+import { MAX_BACKUP_BYTES, MAX_SNAPSHOT_BYTES } from '@/domain/snapshot'
 import { downloadJson } from '@/lib/download'
 import { formatVND } from '@/lib/format'
 import { toast } from 'sonner'
@@ -103,6 +104,34 @@ test('import of a non-JSON file shows invalidBackup', async () => {
   await act(() => view.result.current.actions.importJson(new File(['nope'], 'b.json')))
   expect(view.result.current.state.error).toBe('errors.invalidBackup')
   expect(view.result.current.state.confirm).toBeNull()
+})
+
+test('with sync off, a backup file over the import limit is rejected without reading it', async () => {
+  const { view } = await setup()
+  const file = new File(['x'.repeat(MAX_BACKUP_BYTES + 1)], 'b.json')
+  const text = vi.spyOn(file, 'text')
+  await act(() => view.result.current.actions.importJson(file))
+  expect(view.result.current.state.error).toBe('errors.backupTooLarge')
+  expect(view.result.current.state.confirm).toBeNull()
+  expect(text).not.toHaveBeenCalled()
+})
+
+test('with sync off, a backup file over the sync limit is still read', async () => {
+  const { view } = await setup()
+  await act(() => view.result.current.actions.importJson(new File(['x'.repeat(MAX_SNAPSHOT_BYTES + 1)], 'b.json')))
+  expect(view.result.current.state.error).toBe('errors.invalidBackup')
+})
+
+test('with sync on, a backup file over the sync limit is rejected without reading it', async () => {
+  const { view, repos } = await setup()
+  await repos.meta.set('syncSecret', 'code')
+  await waitFor(() => expect(view.result.current.state.sync.enabled).toBe(true))
+  const file = new File(['x'.repeat(MAX_SNAPSHOT_BYTES + 1)], 'b.json')
+  const text = vi.spyOn(file, 'text')
+  await act(() => view.result.current.actions.importJson(file))
+  expect(view.result.current.state.error).toBe('errors.backupTooLargeForSync')
+  expect(view.result.current.state.confirm).toBeNull()
+  expect(text).not.toHaveBeenCalled()
 })
 
 test('clear all needs two confirmations', async () => {

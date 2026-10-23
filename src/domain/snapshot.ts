@@ -2,6 +2,10 @@ import { z } from 'zod'
 
 export const SNAPSHOT_FORMAT = 'personal-expense-note-snapshot'
 export const SCHEMA_VERSION = 1
+/** Below the 4.5 MB request body cap of Vercel Functions, so the client sees our 413 and not a platform error. */
+export const MAX_SNAPSHOT_BYTES = 4 * 1024 * 1024
+/** Backup files above this are refused before reading, so a wrong file cannot freeze the tab. */
+export const MAX_BACKUP_BYTES = 20 * 1024 * 1024
 
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/)
 const amount = z.number().int().positive()

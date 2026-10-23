@@ -1,6 +1,6 @@
 import type { Snapshot } from '@/domain/snapshot'
 
-export type SyncApiErrorKind = 'unauthorized' | 'network' | 'server'
+export type SyncApiErrorKind = 'unauthorized' | 'network' | 'tooLarge' | 'server'
 
 export class SyncApiError extends Error {
   readonly kind: SyncApiErrorKind
@@ -50,6 +50,7 @@ export function createHttpSyncApi(url = '/api/snapshot'): SyncApi {
         body: JSON.stringify(snapshot),
       })
       if (res.status === 412) return null
+      if (res.status === 413) throw new SyncApiError('tooLarge')
       if (!res.ok) throw new SyncApiError('server')
       return { etag: etagOf(res) }
     },
