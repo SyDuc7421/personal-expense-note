@@ -5,7 +5,9 @@ import { Drawer as DrawerPrimitive } from "vaul"
 function Drawer({
   ...props
 }: React.ComponentProps<typeof DrawerPrimitive.Root>) {
-  return <DrawerPrimitive.Root data-slot="drawer" {...props} />
+  // vaul's own keyboard repositioning ignores visualViewport.offsetTop and double-shifts on iOS;
+  // DrawerContent handles it via useKeyboardInset instead.
+  return <DrawerPrimitive.Root data-slot="drawer" repositionInputs={false} {...props} />
 }
 
 function DrawerTrigger({
@@ -42,11 +44,34 @@ function DrawerOverlay({
   )
 }
 
+/** Keyboard overlap in layout-viewport px (0 when closed) and the visible height while it is open. */
+function useKeyboardInset() {
+  const [inset, setInset] = React.useState<{ bottom: number; height?: number }>({ bottom: 0 })
+  React.useEffect(() => {
+    const vv = window.visualViewport
+    if (!vv) return
+    const update = () => {
+      const bottom = Math.max(0, window.innerHeight - vv.height - vv.offsetTop)
+      setInset(bottom > 0 ? { bottom, height: vv.height } : { bottom: 0 })
+    }
+    update()
+    vv.addEventListener("resize", update)
+    vv.addEventListener("scroll", update)
+    return () => {
+      vv.removeEventListener("resize", update)
+      vv.removeEventListener("scroll", update)
+    }
+  }, [])
+  return inset
+}
+
 function DrawerContent({
   className,
   children,
+  style,
   ...props
 }: React.ComponentProps<typeof DrawerPrimitive.Content>) {
+  const inset = useKeyboardInset()
   return (
     <DrawerPortal data-slot="drawer-portal">
       <DrawerOverlay />
@@ -56,6 +81,11 @@ function DrawerContent({
           "group/drawer-content fixed z-50 flex h-auto flex-col bg-popover text-sm text-popover-foreground data-[vaul-drawer-direction=bottom]:inset-x-0 data-[vaul-drawer-direction=bottom]:bottom-0 data-[vaul-drawer-direction=bottom]:mt-24 data-[vaul-drawer-direction=bottom]:max-h-[90dvh] data-[vaul-drawer-direction=bottom]:rounded-t-xl data-[vaul-drawer-direction=bottom]:border-t data-[vaul-drawer-direction=left]:inset-y-0 data-[vaul-drawer-direction=left]:left-0 data-[vaul-drawer-direction=left]:w-3/4 data-[vaul-drawer-direction=left]:rounded-r-xl data-[vaul-drawer-direction=left]:border-r data-[vaul-drawer-direction=right]:inset-y-0 data-[vaul-drawer-direction=right]:right-0 data-[vaul-drawer-direction=right]:w-3/4 data-[vaul-drawer-direction=right]:rounded-l-xl data-[vaul-drawer-direction=right]:border-l data-[vaul-drawer-direction=top]:inset-x-0 data-[vaul-drawer-direction=top]:top-0 data-[vaul-drawer-direction=top]:mb-24 data-[vaul-drawer-direction=top]:max-h-[90dvh] data-[vaul-drawer-direction=top]:rounded-b-xl data-[vaul-drawer-direction=top]:border-b data-[vaul-drawer-direction=left]:sm:max-w-sm data-[vaul-drawer-direction=right]:sm:max-w-sm",
           className
         )}
+        style={
+          inset.height === undefined
+            ? style
+            : { ...style, bottom: inset.bottom, maxHeight: `min(90dvh, ${inset.height}px)` }
+        }
         {...props}
       >
         <div className="mx-auto mt-4 hidden h-1 w-[100px] shrink-0 rounded-full bg-muted group-data-[vaul-drawer-direction=bottom]/drawer-content:block" />
