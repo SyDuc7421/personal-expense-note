@@ -1,4 +1,5 @@
 import { CATEGORIES, detectCategory } from './categories'
+import { normalize } from './text'
 
 test('every preset category exists, khac last', () => {
   expect(CATEGORIES.map((c) => c.id)).toEqual([
@@ -24,4 +25,43 @@ test('falls back to khac for expense and thunhap for income', () => {
   expect(detectCategory('linh tinh', 'expense')).toBe('khac')
   expect(detectCategory('bán đồ cũ', 'income')).toBe('thunhap')
   expect(detectCategory('lương', 'income')).toBe('thunhap')
+})
+
+test('no keyword belongs to two categories', () => {
+  const owner = new Map<string, string>()
+  for (const c of CATEGORIES) {
+    for (const k of c.keywords) {
+      const key = normalize(k)
+      expect(owner.get(key), `"${k}" in ${c.id} and ${owner.get(key)}`).toBeUndefined()
+      owner.set(key, c.id)
+    }
+  }
+})
+
+test.each([
+  ['bánh mì sáng', 'anuong'],
+  ['highlands', 'anuong'],
+  ['đi chợ', 'anuong'],
+  ['xe om', 'dichuyen'],
+  ['vé máy bay đà nẵng', 'dichuyen'],
+  ['thay nhớt', 'dichuyen'],
+  ['giày thể thao', 'muasam'],
+  ['bách hóa xanh', 'muasam'],
+  ['tiền trọ tháng 10', 'hoadon'],
+  ['nạp card viettel', 'hoadon'],
+  ['vé xem phim cgv', 'giaitri'],
+  ['du lịch đà lạt', 'giaitri'],
+  ['nha khoa', 'suckhoe'],
+  ['học ielts', 'hoctap'],
+  ['hoàn tiền shopee', 'muasam'],
+])('detects "%s" as %s', (note, id) => {
+  expect(detectCategory(note, 'expense')).toBe(id)
+})
+
+test('common Vietnamese words do not trigger false matches', () => {
+  // "trả" strips to "tra", "miễn" to "mien", "lốp" to "lop": none may hit a category.
+  expect(detectCategory('trả nợ', 'expense')).toBe('khac')
+  expect(detectCategory('miễn phí', 'expense')).toBe('khac')
+  expect(detectCategory('kem chống nắng', 'expense')).toBe('khac')
+  expect(detectCategory('hoàn tiền', 'income')).toBe('thunhap')
 })
