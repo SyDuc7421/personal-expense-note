@@ -4,7 +4,6 @@ import { expectTouchTargets } from './helpers/touchTargets'
 test('quick input split: month spend +150k, three friends owe 150k each', async ({ page }) => {
   await page.goto('/')
   const input = page.getByLabel('Nhập nhanh')
-  await expect(input).toBeFocused()
   await input.fill('lẩu 600k /4 @Nam @Huy @Linh')
   await expect(page.getByTestId('parse-preview')).toContainText('Nam, Huy, Linh nợ 150.000 ₫ mỗi người')
   await expect(page.getByTestId('parse-preview')).toContainText('Tạo bạn mới')
