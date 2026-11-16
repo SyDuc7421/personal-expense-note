@@ -1,4 +1,4 @@
-import { Copy, Eye, EyeOff, RefreshCw } from 'lucide-react'
+import { CloudOff, Copy, Eye, EyeOff, RefreshCw } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -68,7 +68,7 @@ export function SyncSection({ vm }: { vm: SettingsViewModel }) {
               <RefreshCw className={sync.busy ? 'animate-spin' : undefined} /> {t('settings.syncNow')}
             </Button>
             <Button variant="outline" onClick={actions.askDisableSync}>
-              {t('settings.syncDisable')}
+              <CloudOff /> {t('settings.syncDisable')}
             </Button>
           </div>
         </>
